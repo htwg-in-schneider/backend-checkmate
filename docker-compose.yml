@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  backendcheckmate:
+    image: backendcheckmate
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8081:8081

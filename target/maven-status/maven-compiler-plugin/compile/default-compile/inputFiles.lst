@@ -1,0 +1,7 @@
+/Users/jarmilski/WebTech/backend-checkmate/src/main/java/de/htwg_in_schneider/checkmate/checkmate_backend/CheckmateBackendApplication.java
+/Users/jarmilski/WebTech/backend-checkmate/src/main/java/de/htwg_in_schneider/checkmate/checkmate_backend/config/DataLoader.java
+/Users/jarmilski/WebTech/backend-checkmate/src/main/java/de/htwg_in_schneider/checkmate/checkmate_backend/config/WebConfig.java
+/Users/jarmilski/WebTech/backend-checkmate/src/main/java/de/htwg_in_schneider/checkmate/checkmate_backend/controller/TutorController.java
+/Users/jarmilski/WebTech/backend-checkmate/src/main/java/de/htwg_in_schneider/checkmate/checkmate_backend/model/Category.java
+/Users/jarmilski/WebTech/backend-checkmate/src/main/java/de/htwg_in_schneider/checkmate/checkmate_backend/model/Tutor.java
+/Users/jarmilski/WebTech/backend-checkmate/src/main/java/de/htwg_in_schneider/checkmate/checkmate_backend/repository/TutorRepository.java

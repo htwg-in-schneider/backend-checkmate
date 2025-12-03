@@ -51,7 +51,7 @@ public class DataLoader {
             mia.setName("Mia Hoffmann");
             mia.setSubject("BWL Grundlagen");
             mia.setSemester(4);
-            mia.setImage("https://images.unsplash.com/photo-1544725176-7c40e5a2c9f1?auto=format&fit=crop&w=500&q=60");
+            mia.setImage("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80");
             mia.setCategory(Category.BWL1);
 
             // In DB speichern – IDs werden von JPA vergeben

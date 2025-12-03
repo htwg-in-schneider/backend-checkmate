@@ -11,7 +11,8 @@ import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorReposito
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
 import java.util.List;
 
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
+@CrossOrigin(origins = "*")
+
 @RestController
 @RequestMapping("/api/tutors")
 public class TutorController {

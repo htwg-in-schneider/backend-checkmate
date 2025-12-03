@@ -1,12 +1,12 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import jakarta.persistence.*;
 
 @Entity
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Review {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -16,7 +16,7 @@ public class Review {
     private String userName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "tutor_id")  
     private Tutor tutor;
 
     // Getters and setters

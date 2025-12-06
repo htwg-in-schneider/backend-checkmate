@@ -1,2 +1,4 @@
 application-prod.properties
-
+application-test.properties
+application-local.properties
+application-dev.properties

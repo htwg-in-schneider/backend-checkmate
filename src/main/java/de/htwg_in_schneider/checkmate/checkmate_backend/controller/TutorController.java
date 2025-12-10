@@ -19,6 +19,7 @@ public class TutorController {
 private static final Logger LOG = LoggerFactory.getLogger(TutorController.class);
     @Autowired
     private TutorRepository tutorRepository;
+    
 
     @GetMapping
     public List<Tutor> getTutors(@RequestParam(required = false) String name, 
@@ -36,10 +37,17 @@ private static final Logger LOG = LoggerFactory.getLogger(TutorController.class)
 
     @PostMapping
 public Tutor createTutor(@RequestBody Tutor tutor) {
+     // Wenn eine ID mitkommt → ignorieren
     if (tutor.getId() != null) {
+        LOG.warn("Attempted to create a tutor with an existing ID. Setting ID to null.");
         tutor.setId(null);
-        LOG.warn("Attempted to create a tutor with an existing ID. ID has been set to null to create a new tutor.");
     }
+
+    // SUBJECT → CATEGORY automatisch setzen
+    if (tutor.getSubject() != null) {
+        tutor.setCategory(mapSubjectToCategory(tutor.getSubject()));
+    }
+
     Tutor newTutor = tutorRepository.save(tutor);
     LOG.info("Created new tutor with id " + newTutor.getId());
     return newTutor;
@@ -47,19 +55,27 @@ public Tutor createTutor(@RequestBody Tutor tutor) {
 
 @PutMapping("/{id}")
 public ResponseEntity<Tutor> updateTutor(@PathVariable Long id, @RequestBody Tutor tutorDetails) {
-    Optional<Tutor> opt = tutorRepository.findById(id);
+     Optional<Tutor> opt = tutorRepository.findById(id);
     if (!opt.isPresent()) {
         return ResponseEntity.notFound().build();
     }
 
     Tutor tutor = opt.get();
+
+    // Felder aktualisieren
     tutor.setName(tutorDetails.getName());
     tutor.setSubject(tutorDetails.getSubject());
     tutor.setSemester(tutorDetails.getSemester());
     tutor.setImage(tutorDetails.getImage());
 
+    // SUBJECT → CATEGORY automatisch setzen
+    if (tutorDetails.getSubject() != null) {
+        tutor.setCategory(mapSubjectToCategory(tutorDetails.getSubject()));
+    }
+
     Tutor updatedTutor = tutorRepository.save(tutor);
     LOG.info("Updated tutor with id " + updatedTutor.getId());
+
     return ResponseEntity.ok(updatedTutor);
 }
 
@@ -84,6 +100,26 @@ public ResponseEntity<Tutor> getTutorById(@PathVariable Long id) {
         return ResponseEntity.notFound().build();
     }
 }
+
+private Category mapSubjectToCategory(String subject) {
+    switch (subject.toLowerCase()) {
+        case "mathe 1":
+            return Category.MATHE1;
+        case "mathe 2":
+            return Category.MATHE2;
+        case "bwl 1":
+            return Category.BWL1;
+        case "bwl 2":
+            return Category.BWL2;
+        case "programmieren":
+            return Category.PROGRAMMIEREN;
+        case "englisch":
+            return Category.ENGLISCH;
+        default:
+            return null; // oder eine Default-Kategorie
+    }
+}
+
 }
 
 

@@ -3,6 +3,11 @@ package de.htwg_in_schneider.checkmate.checkmate_backend.config;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Category;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Review;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
+
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.Role;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.UserRepository;
+
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.ReviewRepository;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorRepository;
 
@@ -20,13 +25,24 @@ public class DataLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
+    // ✅ Auth0 "sub" IDs (Iteration 13b)
+    // Ersetze diese Strings mit den echten sub-Werten aus eurer /profile Debug-Ansicht im Frontend.
+    private static final String STUDENT_SUB = "auth0|695e5f38bd9509a108b5604d";
+    private static final String TUTOR_SUB   = "auth0|695e66fcd58fa9152ab1d6f8";
+    private static final String ADMIN_SUB   = "auth0|695fda2b6f4f6b2870b04cbd";
+
+
     @Bean
     public CommandLineRunner loadData(TutorRepository tutorRepository,
-                                      ReviewRepository reviewRepository) {
+                                      ReviewRepository reviewRepository,
+                                      UserRepository userRepository) {
         return args -> {
-            // Wenn schon Tutor:innen da sind → nichts tun
+
+         
+            seedUsers(userRepository);
+
             if (tutorRepository.count() > 0) {
-                LOG.info("Database already contains tutors. Skipping initial data load.");
+                LOG.info("Database already contains tutors. Skipping initial tutor/review data load.");
                 return;
             }
 
@@ -91,5 +107,41 @@ public class DataLoader {
             reviewRepository.saveAll(Arrays.asList(r1a, r1b, r2, r3));
             LOG.info("Initial tutor + review data loaded successfully.");
         };
+    }
+
+    private void seedUsers(UserRepository userRepository) {
+        // STUDENT
+if (!userRepository.existsByOauthId(STUDENT_SUB)) {
+    User u = new User();
+    u.setOauthId(STUDENT_SUB);
+    u.setName("Thani");
+    u.setEmail("thanhhiendang521@gmail.com");
+    u.setRole(Role.STUDENT);
+    userRepository.save(u);
+}
+
+// TUTOR
+if (TUTOR_SUB != null && !TUTOR_SUB.contains("auth0|695e66fcd58fa9152ab1d6f8")) {
+    if (!userRepository.existsByOauthId(TUTOR_SUB)) {
+        User t = new User();
+        t.setOauthId(TUTOR_SUB);
+        t.setName("Thani");
+        t.setEmail("thanhhiendang521@yahoo.de");
+        t.setRole(Role.TUTOR);
+        userRepository.save(t);
+    }
+}
+
+//ADMIN
+if (ADMIN_SUB != null && !ADMIN_SUB.contains("auth0|695fda2b6f4f6b2870b04cbd")) {
+  if (!userRepository.existsByOauthId(ADMIN_SUB)) {
+        User admin = new User();
+        admin.setOauthId(ADMIN_SUB);
+        admin.setName("Jarmila");
+        admin.setEmail("j.dauth@outlook.com");
+        admin.setRole(Role.ADMIN);
+        userRepository.save(admin);
+    }
+}
     }
 }

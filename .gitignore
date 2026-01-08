@@ -1,2 +1,4 @@
 application-prod.properties
 
+/target/
+/target/

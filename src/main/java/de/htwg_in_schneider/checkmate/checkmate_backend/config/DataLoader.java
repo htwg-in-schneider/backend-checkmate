@@ -108,40 +108,27 @@ public class DataLoader {
             LOG.info("Initial tutor + review data loaded successfully.");
         };
     }
+private void seedUsers(UserRepository userRepository) {
+    upsertUser(userRepository, STUDENT_SUB, "Thani", "thanhhiendang521@gmail.com", Role.STUDENT);
+    upsertUser(userRepository, TUTOR_SUB,   "Thani", "thanhhiendang521@yahoo.de",  Role.TUTOR);
+    upsertUser(userRepository, ADMIN_SUB,   "Jarmila", "j.dauth@outlook.com",      Role.ADMIN);
+    upsertUser(userRepository, "auth0|69600b3a6f4f6b2870b06d21",   "Thamila", "dieuhienmy@yahoo.de", Role.ADMIN);
+}
 
-    private void seedUsers(UserRepository userRepository) {
-        // STUDENT
-if (!userRepository.existsByOauthId(STUDENT_SUB)) {
-    User u = new User();
-    u.setOauthId(STUDENT_SUB);
-    u.setName("Thani");
-    u.setEmail("thanhhiendang521@gmail.com");
-    u.setRole(Role.STUDENT);
+private void upsertUser(UserRepository userRepository,
+                        String oauthId,
+                        String name,
+                        String email,
+                        Role role) {
+
+    User u = userRepository.findByOauthId(oauthId).orElseGet(User::new);
+
+    u.setOauthId(oauthId);
+    u.setName(name);
+    u.setEmail(email);
+    u.setRole(role);
+
     userRepository.save(u);
 }
 
-// TUTOR
-if (TUTOR_SUB != null && !TUTOR_SUB.contains("auth0|695e66fcd58fa9152ab1d6f8")) {
-    if (!userRepository.existsByOauthId(TUTOR_SUB)) {
-        User t = new User();
-        t.setOauthId(TUTOR_SUB);
-        t.setName("Thani");
-        t.setEmail("thanhhiendang521@yahoo.de");
-        t.setRole(Role.TUTOR);
-        userRepository.save(t);
-    }
-}
-
-//ADMIN
-if (ADMIN_SUB != null && !ADMIN_SUB.contains("auth0|695fda2b6f4f6b2870b04cbd")) {
-  if (!userRepository.existsByOauthId(ADMIN_SUB)) {
-        User admin = new User();
-        admin.setOauthId(ADMIN_SUB);
-        admin.setName("Jarmila");
-        admin.setEmail("j.dauth@outlook.com");
-        admin.setRole(Role.ADMIN);
-        userRepository.save(admin);
-    }
-}
-    }
 }

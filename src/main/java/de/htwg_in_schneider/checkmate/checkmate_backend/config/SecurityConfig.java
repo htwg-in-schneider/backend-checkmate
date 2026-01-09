@@ -41,9 +41,9 @@ public class SecurityConfig {
             // Öffentliche READ-Zugriffe
             .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
 
-            .requestMatchers(HttpMethod.POST, "/api/tutors").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/api/tutors/**").hasAnyRole("ADMIN", "TUTOR")
-            .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/*").authenticated()
+.requestMatchers(HttpMethod.PUT, "/api/tutors/*").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/tutors/*").authenticated()
         
             .requestMatchers("/api/profile").authenticated()
             .anyRequest().permitAll()

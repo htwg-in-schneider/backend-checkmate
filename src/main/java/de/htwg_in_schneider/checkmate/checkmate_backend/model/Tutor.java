@@ -19,6 +19,8 @@ public class Tutor {
     private String subject;
     private int semester;
     private String image;
+    private Double hourlyRate;
+    private String email;
 
     // NEU: Category-Feld, passend zu eurem Enum
     @Enumerated(EnumType.STRING)
@@ -31,12 +33,15 @@ public class Tutor {
     public Tutor() {
     }
 
-    public Tutor(Long id, String name, String subject, int semester, String image) {
+    public Tutor(Long id, String name, String subject, int semester, String image, double hourlyRate, String email) {
         this.id = id;
         this.name = name;
         this.subject = subject;
         this.semester = semester;
         this.image = image;
+        this.hourlyRate = hourlyRate;
+        this.email = email;
+
     }
 
     // Getter & Setter
@@ -79,6 +84,24 @@ public class Tutor {
     public void setImage(String image) {
         this.image = image;
     }
+
+    public double getHourlyRate() {
+        return hourlyRate;
+    }
+
+    public void setHourlyRate(double hourlyRate) {
+        this.hourlyRate = hourlyRate;
+    }
+    
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
 
     // NEU: Category
     public Category getCategory() {
@@ -133,6 +156,7 @@ public class Tutor {
                 ", semester=" + semester +
                 ", image='" + image + '\'' +
                 ", category=" + category +
+                ", hourly rate=" + hourlyRate +
                 '}';
     }
 }

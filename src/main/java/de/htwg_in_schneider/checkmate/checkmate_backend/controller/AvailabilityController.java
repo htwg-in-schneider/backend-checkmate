@@ -1,6 +1,5 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.controller;
 
-import de.htwg_in_schneider.checkmate.checkmate_backend.dto.AvailableSlot;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.AvailabilityRule;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Booking;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.AvailabilityRuleRepository;
@@ -8,78 +7,116 @@ import de.htwg_in_schneider.checkmate.checkmate_backend.repository.BookingReposi
 import org.springframework.web.bind.annotation.*;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tutors")
 public class AvailabilityController {
 
-    private final AvailabilityRuleRepository ruleRepo;
     private final BookingRepository bookingRepo;
+    private final AvailabilityRuleRepository availabilityRuleRepo;
 
-    public AvailabilityController(AvailabilityRuleRepository ruleRepo, BookingRepository bookingRepo) {
-        this.ruleRepo = ruleRepo;
+    public AvailabilityController(BookingRepository bookingRepo, AvailabilityRuleRepository availabilityRuleRepo) {
         this.bookingRepo = bookingRepo;
+        this.availabilityRuleRepo = availabilityRuleRepo;
     }
 
-    // ✅ Regeln setzen (fürs Projekt: ohne Security erstmal ok, später Admin/Tutor schützen)
-    @PostMapping("/{tutorId}/availability-rules")
-    public List<AvailabilityRule> setRules(@PathVariable Long tutorId, @RequestBody List<AvailabilityRule> rules) {
-        ruleRepo.deleteByTutorId(tutorId);
-        for (var r : rules) r.setTutorId(tutorId);
-        return ruleRepo.saveAll(rules);
-    }
-
-    @GetMapping("/{tutorId}/availability-rules")
-    public List<AvailabilityRule> getRules(@PathVariable Long tutorId) {
-        return ruleRepo.findByTutorId(tutorId);
-    }
-
-    // ✅ Slots generieren (next 14 days default)
-    @GetMapping("/{tutorId}/available-slots")
-    public List<AvailableSlot> getAvailableSlots(
+    // ✅ 1) Dates: nur Tage zurückgeben, an denen es mind. 1 freien Slot gibt
+    @GetMapping("/{tutorId}/available-dates")
+    public List<String> getAvailableDates(
             @PathVariable Long tutorId,
-            @RequestParam(required = false) String from,
-            @RequestParam(required = false, defaultValue = "14") int days
+            @RequestParam(defaultValue = "14") int days,
+            @RequestParam(defaultValue = "60") int durationMinutes
     ) {
-        LocalDate start = (from != null) ? LocalDate.parse(from) : LocalDate.now();
-        LocalDate end = start.plusDays(days);
+        LocalDate today = LocalDate.now();
 
-        var rules = ruleRepo.findByTutorId(tutorId);
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < days; i++) {
+            LocalDate d = today.plusDays(i);
+            if (hasFreeSlot(tutorId, d, durationMinutes)) {
+                result.add(d.toString()); // "YYYY-MM-DD"
+            }
+        }
+        return result;
+    }
 
-        LocalDateTime fromDt = start.atStartOfDay();
-        LocalDateTime toDt = end.atTime(23, 59);
+    private boolean hasFreeSlot(Long tutorId, LocalDate date, int durationMinutes) {
+        DayOfWeek dow = date.getDayOfWeek();
 
-        // gebuchte Startzeiten (damit sie nicht mehr angezeigt werden)
-        Set<LocalDateTime> bookedStarts = bookingRepo
-                .findByTutorIdAndStartAtBetween(tutorId, fromDt, toDt)
-                .stream()
-                .map(Booking::getStartAt)
-                .collect(Collectors.toSet());
+        List<AvailabilityRule> rules = availabilityRuleRepo.findByTutorIdAndDayOfWeek(tutorId, dow);
+        if (rules == null || rules.isEmpty()) return false;
 
-        List<AvailableSlot> result = new ArrayList<>();
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
 
-        for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
-            DayOfWeek dow = d.getDayOfWeek();
+        List<Booking> bookings = bookingRepo.findByTutorIdAndStartAtLessThanAndStartAtGreaterThanEqual(
+                tutorId, dayEnd, dayStart
+        );
 
-            for (AvailabilityRule r : rules) {
-                if (r.getDayOfWeek() != dow) continue;
+        int stepMinutes = 30;
 
-                int slotMinutes = (r.getSlotMinutes() != null) ? r.getSlotMinutes() : 60;
+        for (AvailabilityRule r : rules) {
+            LocalTime t = r.getStartTime();
+            while (!t.plusMinutes(durationMinutes).isAfter(r.getEndTime())) {
+                LocalDateTime slotStart = LocalDateTime.of(date, t);
+                LocalDateTime slotEnd = slotStart.plusMinutes(durationMinutes);
 
-                LocalTime t = r.getStartTime();
-                while (!t.plusMinutes(slotMinutes).isAfter(r.getEndTime())) {
-                    LocalDateTime slotStart = LocalDateTime.of(d, t);
-                    if (!bookedStarts.contains(slotStart)) {
-                        result.add(new AvailableSlot(slotStart, slotMinutes));
-                    }
-                    t = t.plusMinutes(slotMinutes);
-                }
+                boolean overlaps = bookings.stream().anyMatch(b -> overlaps(slotStart, slotEnd, b));
+                if (!overlaps) return true;
+
+                t = t.plusMinutes(stepMinutes);
             }
         }
 
-        result.sort(Comparator.comparing(s -> s.startAt));
-        return result;
+        return false;
+    }
+
+    // ✅ 2) Times: nur wirklich freie Zeiten (Rules minus Bookings)
+    @GetMapping("/{tutorId}/available-times")
+    public List<String> getAvailableTimes(
+            @PathVariable Long tutorId,
+            @RequestParam String date,                 // "YYYY-MM-DD"
+            @RequestParam(defaultValue = "60") int durationMinutes
+    ) {
+        LocalDate day = LocalDate.parse(date);
+        DayOfWeek dow = day.getDayOfWeek();
+
+        // Verfügbarkeits-Regeln für diesen Wochentag
+        List<AvailabilityRule> rules = availabilityRuleRepo.findByTutorIdAndDayOfWeek(tutorId, dow);
+        if (rules == null || rules.isEmpty()) return List.of();
+
+        LocalDateTime dayStart = day.atStartOfDay();
+        LocalDateTime dayEnd = day.plusDays(1).atStartOfDay();
+
+        List<Booking> bookings = bookingRepo.findByTutorIdAndStartAtLessThanAndStartAtGreaterThanEqual(
+                tutorId, dayEnd, dayStart
+        );
+
+        int stepMinutes = 30;
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm");
+
+        List<String> result = new ArrayList<>();
+
+        for (AvailabilityRule r : rules) {
+            for (LocalTime t = r.getStartTime();
+                 !t.plusMinutes(durationMinutes).isAfter(r.getEndTime());
+                 t = t.plusMinutes(stepMinutes)) {
+
+                LocalDateTime slotStart = LocalDateTime.of(day, t);
+                LocalDateTime slotEnd = slotStart.plusMinutes(durationMinutes);
+
+                boolean overlaps = bookings.stream().anyMatch(b -> overlaps(slotStart, slotEnd, b));
+                if (!overlaps) result.add(t.format(fmt));
+            }
+        }
+
+        return result.stream().distinct().sorted().toList();
+    }
+
+    private boolean overlaps(LocalDateTime slotStart, LocalDateTime slotEnd, Booking b) {
+        LocalDateTime bStart = b.getStartAt();
+        LocalDateTime bEnd = bStart.plusMinutes(b.getDurationMinutes());
+        return slotStart.isBefore(bEnd) && bStart.isBefore(slotEnd);
     }
 }

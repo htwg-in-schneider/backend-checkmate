@@ -68,7 +68,7 @@ public class DataLoader {
             lisa.setImage("https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=500&q=60");
             lisa.setCategory(Category.MATHE1);
             lisa.setHourlyRate(25.0);
-            lisa.setEmail("j.dauth@outlook.com");
+            lisa.setEmail("lisa@outlook.com");
 
             Tutor jonas = new Tutor();
             jonas.setName("Jonas Keller");
@@ -77,7 +77,7 @@ public class DataLoader {
             jonas.setImage("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&q=60");
             jonas.setCategory(Category.PROGRAMMIEREN);
             jonas.setHourlyRate(20.0);
-            jonas.setEmail("j.dauth@outlook.com");
+            jonas.setEmail("jonas@outlook.com");
 
 
             Tutor mia = new Tutor();
@@ -87,7 +87,7 @@ public class DataLoader {
             mia.setImage("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80");
             mia.setCategory(Category.BWL1);
             mia.setHourlyRate(22.0);
-            mia.setEmail("j.dauth@outlook.com");
+            mia.setEmail("mia@outlook.com");
 
 
             // In DB speichern – IDs werden von JPA vergeben

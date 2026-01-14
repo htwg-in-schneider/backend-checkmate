@@ -1,9 +1,7 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.model;
 
 import jakarta.persistence.*;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions")
@@ -13,43 +11,37 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Auth0 sub vom Käufer (Student)
-    @Column(nullable = false)
-    private String buyerOauthId;
+    private String studentOauthId;
+    private String studentName;
 
-    @Column(nullable = false)
     private String buyerEmail;
 
-    @Column(nullable = false)
-    private Double totalPrice;
+    @Column(length = 2000)
+    private String note;
 
-    @Column(nullable = false)
-    private Instant createdAt = Instant.now();
+    private double totalPrice;
 
-    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TransactionItem> items = new ArrayList<>();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Convenience: Item hinzufügen
-    public void addItem(TransactionItem item) {
-        items.add(item);
-        item.setTransaction(this);
-    }
+    // --- getters/setters ---
 
-    // Getter/Setter
     public Long getId() { return id; }
 
-    public String getBuyerOauthId() { return buyerOauthId; }
-    public void setBuyerOauthId(String buyerOauthId) { this.buyerOauthId = buyerOauthId; }
+    public String getStudentOauthId() { return studentOauthId; }
+    public void setStudentOauthId(String studentOauthId) { this.studentOauthId = studentOauthId; }
+
+    public String getStudentName() { return studentName; }
+    public void setStudentName(String studentName) { this.studentName = studentName; }
 
     public String getBuyerEmail() { return buyerEmail; }
     public void setBuyerEmail(String buyerEmail) { this.buyerEmail = buyerEmail; }
 
-    public Double getTotalPrice() { return totalPrice; }
-    public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public double getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(double totalPrice) { this.totalPrice = totalPrice; }
 
-    public List<TransactionItem> getItems() { return items; }
-    public void setItems(List<TransactionItem> items) { this.items = items; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

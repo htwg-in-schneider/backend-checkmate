@@ -35,17 +35,20 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
 
+            // ✅ Admin-only
+            .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+        
             // Profile braucht Login
             .requestMatchers("/api/profile").authenticated()
-
-            // Öffentliche READ-Zugriffe
-            .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
-
-            .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/*").authenticated()
-.requestMatchers(HttpMethod.PUT, "/api/tutors/*").authenticated()
-.requestMatchers(HttpMethod.DELETE, "/api/tutors/*").authenticated()
         
-            .requestMatchers("/api/profile").authenticated()
+            // Tutor CRUD nur Admin (wenn gewollt)
+            .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/*").hasAuthority("ROLE_ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/tutors/*").hasAuthority("ROLE_ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/tutors/*").hasAuthority("ROLE_ADMIN")
+        
+            // Öffentliche READ-Zugriffe (Achtung: kommt NACH admin)
+            .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+        
             .anyRequest().permitAll()
         )
         .oauth2ResourceServer(oauth2 -> oauth2

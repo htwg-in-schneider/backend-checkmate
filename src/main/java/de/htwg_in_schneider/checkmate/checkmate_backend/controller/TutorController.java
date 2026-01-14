@@ -5,11 +5,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
 import org.springframework.web.bind.annotation.*;
-import java.util.Optional;
+
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.AvailabilityRule;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Category;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.AvailabilityRuleRepository;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorRepository;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
+
+import java.util.*;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @CrossOrigin(origins = "*")
 
@@ -19,6 +27,8 @@ public class TutorController {
 private static final Logger LOG = LoggerFactory.getLogger(TutorController.class);
     @Autowired
     private TutorRepository tutorRepository;
+    @Autowired
+private AvailabilityRuleRepository availabilityRuleRepository;
     
 
     @GetMapping
@@ -99,6 +109,35 @@ public ResponseEntity<Tutor> getTutorById(@PathVariable Long id) {
     } else {
         return ResponseEntity.notFound().build();
     }
+}
+
+@GetMapping("/{tutorId}/available-times")
+public List<String> getAvailableTimes(
+        @PathVariable Long tutorId,
+        @RequestParam String date,
+        @RequestParam(defaultValue = "60") int durationMinutes
+) {
+    LocalDate d = LocalDate.parse(date);           // "2026-01-14"
+    DayOfWeek dow = d.getDayOfWeek();
+
+    List<AvailabilityRule> rules =
+            availabilityRuleRepository.findByTutorIdAndDayOfWeek(tutorId, dow);
+
+    List<String> times = new ArrayList<>();
+
+    for (AvailabilityRule r : rules) {
+        LocalTime t = r.getStartTime();
+
+        // ✅ halbstündlich:
+        while (!t.plusMinutes(durationMinutes).isAfter(r.getEndTime())) {
+            // "14:00", "14:30" ...
+            times.add(String.format("%02d:%02d", t.getHour(), t.getMinute()));
+            t = t.plusMinutes(30);
+        }
+    }
+
+    // Optional: sortieren und doppelte entfernen falls mehrere Regeln am gleichen Tag
+    return times.stream().distinct().sorted().toList();
 }
 
 private Category mapSubjectToCategory(String subject) {

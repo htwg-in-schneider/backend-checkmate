@@ -7,9 +7,10 @@ import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Role;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.UserRepository;
-
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.AvailabilityRule;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.ReviewRepository;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorRepository;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.AvailabilityRuleRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ public class DataLoader {
 
     @Bean
     public CommandLineRunner loadData(TutorRepository tutorRepository,
+                                     AvailabilityRuleRepository availabilityRuleRepository,
                                       ReviewRepository reviewRepository,
                                       UserRepository userRepository) {
         return args -> {
@@ -86,6 +88,20 @@ public class DataLoader {
             Tutor savedLisa = savedTutors.get(0);
             Tutor savedJonas = savedTutors.get(1);
             Tutor savedMia = savedTutors.get(2);
+
+            AvailabilityRule ar1 = new AvailabilityRule();
+            ar1.setTutorId(savedJonas.getId());
+            ar1.setDayOfWeek(java.time.DayOfWeek.TUESDAY);
+            ar1.setStartTime(java.time.LocalTime.of(14,0));
+            ar1.setEndTime(java.time.LocalTime.of(19,0));
+            
+            AvailabilityRule ar2 = new AvailabilityRule();
+            ar2.setTutorId(savedJonas.getId());
+            ar2.setDayOfWeek(java.time.DayOfWeek.WEDNESDAY);
+            ar2.setStartTime(java.time.LocalTime.of(14,0));
+            ar2.setEndTime(java.time.LocalTime.of(19,0));
+            
+            availabilityRuleRepository.saveAll(List.of(ar1, ar2));
 
             // ---------- Reviews anlegen ----------
             Review r1a = new Review();

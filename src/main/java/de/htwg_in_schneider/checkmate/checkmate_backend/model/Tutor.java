@@ -33,7 +33,7 @@ public class Tutor {
     public Tutor() {
     }
 
-    public Tutor(Long id, String name, String subject, int semester, String image, double hourlyRate, String email) {
+    public Tutor(Long id, String name, String subject, int semester, String image, Double hourlyRate, String email) {
         this.id = id;
         this.name = name;
         this.subject = subject;
@@ -85,11 +85,11 @@ public class Tutor {
         this.image = image;
     }
 
-    public double getHourlyRate() {
+    public Double getHourlyRate() {
         return hourlyRate;
     }
 
-    public void setHourlyRate(double hourlyRate) {
+    public void setHourlyRate(Double hourlyRate) {
         this.hourlyRate = hourlyRate;
     }
     

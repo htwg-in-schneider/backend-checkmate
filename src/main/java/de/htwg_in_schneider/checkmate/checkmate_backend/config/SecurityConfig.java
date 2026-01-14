@@ -31,32 +31,30 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(c -> {})
-        .csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth -> auth
+                .cors(c -> {
+                })
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
 
-            // ✅ Admin-only
-            .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-        
             // Profile braucht Login
             .requestMatchers("/api/profile").authenticated()
-        
-            // Tutor CRUD nur Admin (wenn gewollt)
-            .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/*").hasAuthority("ROLE_ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/api/tutors/*").hasAuthority("ROLE_ADMIN")
-            .requestMatchers(HttpMethod.DELETE, "/api/tutors/*").hasAuthority("ROLE_ADMIN")
-        
-            // Öffentliche READ-Zugriffe (Achtung: kommt NACH admin)
+
+            // Öffentliche READ-Zugriffe
             .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+
+            .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/*").authenticated()
+.requestMatchers(HttpMethod.PUT, "/api/tutors/*").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/tutors/*").authenticated()
         
+            .requestMatchers("/api/profile").authenticated()
             .anyRequest().permitAll()
         )
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(jwt -> jwt.decoder(jwtDecoder()))
         );
 
-    return http.build();
-}
+        return http.build();
+    }
 
     @Bean
     public JwtDecoder jwtDecoder() {
@@ -71,8 +69,7 @@ public class SecurityConfig {
             OAuth2Error err = new OAuth2Error(
                     "invalid_token",
                     "Missing or invalid audience. Expected: " + audience,
-                    null
-            );
+                    null);
             return OAuth2TokenValidatorResult.failure(err);
         };
 
@@ -87,10 +84,11 @@ public class SecurityConfig {
         // ✅ Frontend Dev Server
         config.setAllowedOrigins(List.of("http://localhost:5173"));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST","PUT","PATCH" , "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 
-        // Falls ihr Cookies/Sessions nutzt (für JWT meist nicht nötig, aber schadet nicht):
+        // Falls ihr Cookies/Sessions nutzt (für JWT meist nicht nötig, aber schadet
+        // nicht):
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

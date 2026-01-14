@@ -31,29 +31,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(c -> {})
-        .csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth -> auth
+                .cors(c -> {
+                })
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
 
-            // Profile braucht Login
-            .requestMatchers("/api/profile").authenticated()
+                        // Profile braucht Login
+                        .requestMatchers("/api/profile").authenticated()
+                        // Matches
+                        .requestMatchers("/api/matches/**").authenticated()
 
-            // Öffentliche READ-Zugriffe
-            .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+                        // NEU: Zugriff auf User-Endpunkte erlauben
+                        .requestMatchers("/api/users/**").authenticated()
 
-            .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/*").authenticated()
-.requestMatchers(HttpMethod.PUT, "/api/tutors/*").authenticated()
-.requestMatchers(HttpMethod.DELETE, "/api/tutors/*").authenticated()
-        
-            .requestMatchers("/api/profile").authenticated()
-            .anyRequest().permitAll()
-        )
-        .oauth2ResourceServer(oauth2 -> oauth2
-            .jwt(jwt -> jwt.decoder(jwtDecoder()))
-        );
+                        // Öffentliche READ-Zugriffe
+                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
 
-    return http.build();
-}
+                        .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/*").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/tutors/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/tutors/*").authenticated()
+
+                        .requestMatchers("/api/profile").authenticated()
+                        .anyRequest().permitAll())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.decoder(jwtDecoder())));
+
+        return http.build();
+    }
 
     @Bean
     public JwtDecoder jwtDecoder() {
@@ -68,8 +72,7 @@ public class SecurityConfig {
             OAuth2Error err = new OAuth2Error(
                     "invalid_token",
                     "Missing or invalid audience. Expected: " + audience,
-                    null
-            );
+                    null);
             return OAuth2TokenValidatorResult.failure(err);
         };
 
@@ -84,10 +87,11 @@ public class SecurityConfig {
         // ✅ Frontend Dev Server
         config.setAllowedOrigins(List.of("http://localhost:5173"));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST","PUT","PATCH" , "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 
-        // Falls ihr Cookies/Sessions nutzt (für JWT meist nicht nötig, aber schadet nicht):
+        // Falls ihr Cookies/Sessions nutzt (für JWT meist nicht nötig, aber schadet
+        // nicht):
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

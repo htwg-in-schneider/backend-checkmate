@@ -43,14 +43,14 @@ public class SecurityConfig {
           "/api/bookings",
           "/api/chat/**"
         ).authenticated()
+// -------- ADMIN --------
+// ✅ Admin-Endpunkte brauchen Login, Admin-Check machen wir im Controller via DB
+.requestMatchers("/api/admin/**").authenticated()
 
-        // -------- ADMIN --------
-        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-
-        // Tutor anlegen / ändern / löschen -> Admin
-        .requestMatchers(HttpMethod.POST, "/api/tutors").hasAuthority("ROLE_ADMIN")
-        .requestMatchers(HttpMethod.PUT, "/api/tutors/**").hasAuthority("ROLE_ADMIN")
-        .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").hasAuthority("ROLE_ADMIN")
+// Tutor anlegen / ändern / löschen -> Admin (auch hier: besser DB-check im Controller)
+.requestMatchers(HttpMethod.POST, "/api/tutors").authenticated()
+.requestMatchers(HttpMethod.PUT, "/api/tutors/**").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/tutors/**").authenticated()
 
         // alles andere:
         .anyRequest().permitAll()

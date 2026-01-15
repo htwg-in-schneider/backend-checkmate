@@ -16,14 +16,12 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
     http
-      // falls ihr Cookies NICHT nutzt (bei JWT üblich):
       .csrf(csrf -> csrf.disable())
-
-      // CORS: wenn ihr schon @CrossOrigin nutzt, reicht oft das hier.
-      // Wenn ihr Probleme bekommt, sag Bescheid – dann machen wir ein richtiges CorsConfigurationSource Bean.
       .cors(Customizer.withDefaults())
 
       .authorizeHttpRequests(auth -> auth
+        // ✅ Preflight Requests erlauben (CORS)
+        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
         // -------- PUBLIC (ohne Login) --------
         .requestMatchers(HttpMethod.GET,
@@ -35,27 +33,27 @@ public class SecurityConfig {
         ).permitAll()
 
         // -------- AUTHENTICATED USER --------
-        // Profil / eigene Buchungen / Checkout-POST / Chat
         .requestMatchers(
           "/api/profile",
           "/api/my/**",
           "/api/bookings",
-          "/api/chat/**"
+          "/api/messages/**"
         ).authenticated()
 
-        // -------- ADMIN --------
-        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+       // -------- ADMIN --------
+// ✅ Admin-Endpunkte brauchen Login, Admin-Check machen wir im Controller via DB
+.requestMatchers("/api/admin/**").authenticated()
 
-        // Tutor anlegen / ändern / löschen -> Admin
-        .requestMatchers(HttpMethod.POST, "/api/tutors").hasAuthority("ROLE_ADMIN")
-        .requestMatchers(HttpMethod.PUT, "/api/tutors/**").hasAuthority("ROLE_ADMIN")
-        .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").hasAuthority("ROLE_ADMIN")
+// Tutor anlegen / ändern / löschen -> Admin (auch hier: besser DB-check im Controller)
+.requestMatchers(HttpMethod.POST, "/api/tutors").authenticated()
+.requestMatchers(HttpMethod.PUT, "/api/tutors/**").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/tutors/**").authenticated()
 
-        // alles andere:
+        
+
         .anyRequest().permitAll()
       )
 
-      // JWT Resource Server (Auth0)
       .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
     return http.build();

@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/my/messages") // ✅ HIER sauber
 public class MessageController {
 
     private final MessageRepository messageRepo;
@@ -30,7 +30,7 @@ public class MessageController {
     // THREADS LIST
     // GET /api/my/messages/threads
     // ============
-    @GetMapping("/my/messages/threads")
+    @GetMapping("/threads")
     public List<Map<String, Object>> myThreads(@AuthenticationPrincipal Jwt jwt) {
         String studentSub = jwt.getSubject();
 
@@ -51,7 +51,7 @@ public class MessageController {
             dto.put("tutorId", tutorId);
             dto.put("tutorName", tutorNames.getOrDefault(tutorId, "Tutor #" + tutorId));
             dto.put("lastText", last.getText());
-            dto.put("lastAt", last.getCreatedAt());
+            dto.put("updatedAt", last.getCreatedAt()); // ✅ Frontend erwartet "updatedAt"
             return dto;
         }).toList();
     }
@@ -60,7 +60,7 @@ public class MessageController {
     // CONVERSATION
     // GET /api/my/messages/tutors/{tutorId}
     // ============
-    @GetMapping("/my/messages/tutors/{tutorId}")
+    @GetMapping("/tutors/{tutorId}")
     public List<Message> myConversation(@AuthenticationPrincipal Jwt jwt, @PathVariable Long tutorId) {
         String studentSub = jwt.getSubject();
         return messageRepo.findByStudentOauthIdAndTutorIdOrderByCreatedAtAsc(studentSub, tutorId);
@@ -73,8 +73,11 @@ public class MessageController {
     // ============
     public static class SendBody { public String text; }
 
-    @PostMapping("/my/messages/tutors/{tutorId}")
-    public ResponseEntity<?> send(@AuthenticationPrincipal Jwt jwt, @PathVariable Long tutorId, @RequestBody SendBody body) {
+    @PostMapping("/tutors/{tutorId}")
+    public ResponseEntity<?> send(@AuthenticationPrincipal Jwt jwt,
+                                  @PathVariable Long tutorId,
+                                  @RequestBody SendBody body) {
+
         String studentSub = jwt.getSubject();
 
         String text = body == null ? null : body.text;
@@ -91,7 +94,7 @@ public class MessageController {
         Message m = new Message();
         m.setTutorId(tutorId);
         m.setStudentOauthId(studentSub);
-        m.setSender(Message.Sender.STUDENT);
+        m.setSender(Message.Sender.STUDENT); // ✅ Enum!
         m.setText(text.trim());
         m.setCreatedAt(LocalDateTime.now());
 

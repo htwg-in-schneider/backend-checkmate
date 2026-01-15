@@ -1,11 +1,15 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "messages")
 public class Message {
+
+    public enum Sender { STUDENT, TUTOR }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,10 +28,9 @@ public class Message {
     @Column(nullable = false, length = 2000)
     private String text;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(nullable = false)
     private LocalDateTime createdAt;
-
-    public enum Sender { STUDENT, TUTOR }
 
     @PrePersist
     public void prePersist() {

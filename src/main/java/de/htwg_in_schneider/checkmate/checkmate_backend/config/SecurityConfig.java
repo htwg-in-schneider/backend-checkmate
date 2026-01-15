@@ -1,4 +1,5 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.config;
+import static org.springframework.security.config.Customizer.withDefaults;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,51 +14,32 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(csrf -> csrf.disable()) // Deaktiviert für JWT-Nutzung
+                .cors(withDefaults())        // Nutzt deine WebConfig-Einstellungen
+                .authorizeHttpRequests((authorize) -> authorize
+                        // 1. Profil & Buchungen: Muss nur eingeloggt sein
+                        .requestMatchers("/api/profile", "/api/profile/**").authenticated()
+                        .requestMatchers("/api/bookings", "/api/bookings/**").authenticated()
+                        .requestMatchers("/api/my/**").authenticated()
 
-    http
-      // falls ihr Cookies NICHT nutzt (bei JWT üblich):
-      .csrf(csrf -> csrf.disable())
+                        // 2. Tutoren ändern/erstellen: Erstmal nur "authenticated" zum Testen
+                        // Später kannst du hier wieder .hasRole("ADMIN") einfügen
+                        .requestMatchers(HttpMethod.POST, "/api/tutors", "/api/tutors/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/tutors/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").authenticated()
 
-      // CORS: wenn ihr schon @CrossOrigin nutzt, reicht oft das hier.
-      // Wenn ihr Probleme bekommt, sag Bescheid – dann machen wir ein richtiges CorsConfigurationSource Bean.
-      .cors(Customizer.withDefaults())
+                        // 3. Öffentliche Daten: Jeder darf gucken
+                        .requestMatchers(HttpMethod.GET, "/api/tutors", "/api/tutors/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
 
-      .authorizeHttpRequests(auth -> auth
-
-        // -------- PUBLIC (ohne Login) --------
-        .requestMatchers(HttpMethod.GET,
-          "/api/tutors",
-          "/api/tutors/*",
-          "/api/category",
-          "/api/tutors/*/available-dates",
-          "/api/tutors/*/available-times"
-        ).permitAll()
-
-        // -------- AUTHENTICATED USER --------
-        // Profil / eigene Buchungen / Checkout-POST / Chat
-        .requestMatchers(
-          "/api/profile",
-          "/api/my/**",
-          "/api/bookings",
-          "/api/chat/**"
-        ).authenticated()
-
-        // -------- ADMIN --------
-        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-
-        // Tutor anlegen / ändern / löschen -> Admin
-        .requestMatchers(HttpMethod.POST, "/api/tutors").hasAuthority("ROLE_ADMIN")
-        .requestMatchers(HttpMethod.PUT, "/api/tutors/**").hasAuthority("ROLE_ADMIN")
-        .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").hasAuthority("ROLE_ADMIN")
-
-        // alles andere:
-        .anyRequest().permitAll()
-      )
-
-      // JWT Resource Server (Auth0)
-      .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-
-    return http.build();
-  }
+                        // 4. Alles andere absichern oder erlauben
+                        .requestMatchers("/api/**").permitAll() 
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(withDefaults()))
+                .build();
+    }
 }

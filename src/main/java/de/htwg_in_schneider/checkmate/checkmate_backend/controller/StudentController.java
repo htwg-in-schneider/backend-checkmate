@@ -13,16 +13,27 @@ import java.util.List;
 public class StudentController {
 
     private final StudentRepository repo;
+    
 
     public StudentController(StudentRepository repo) {
         this.repo = repo;
     }
 
-    // ✅ Public (wenn gewollt)
     @GetMapping
-    public List<Student> getAll() {
-        return repo.findAll();
+    public List<Student> getAll(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt != null) {
+        // Wenn eingeloggt: Zeige alle außer mir selbst
+          String myOauthId = jwt.getSubject();
+          return repo.findAllByUser_OauthIdNot(myOauthId);
     }
+    // Falls nicht eingeloggt (public): Zeige alle
+    return repo.findAll();
+}
+    // ✅ Public (wenn gewollt)
+    //@GetMapping
+    //public List<Student> getAll() {
+    //    return repo.findAll();
+    //}
 
     // ✅ Public (wenn gewollt)
     @GetMapping("/{id}")

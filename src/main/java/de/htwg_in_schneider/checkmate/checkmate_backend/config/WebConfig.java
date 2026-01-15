@@ -12,6 +12,15 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedMethods("GET", "POST", "PUT", "DELETE");
+                // 1. Erlaube deine lokale Entwicklung und die GitHub-Live-Seite
+                .allowedOrigins(
+                    "http://localhost:5173", 
+                    "https://htwg-in-schneider.github.io"
+                )
+                // 2. Erlaube die Standard-Methoden inkl. OPTIONS für Preflight-Requests
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                // 3. WICHTIG: Erlaube den Authorization-Header für Auth0
+                .allowedHeaders("Authorization", "Content-Type")
+                .allowCredentials(true);
     }
 }

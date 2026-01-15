@@ -1,28 +1,20 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.config;
 
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Category;
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Review;
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
-
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Role;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.UserRepository;
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.AvailabilityRule;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.ReviewRepository;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorRepository;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.AvailabilityRuleRepository;
-
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Student;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.StudentRepository;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.*;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,25 +23,25 @@ public class DataLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
-    // ✅ Auth0 "sub" IDs (Iteration 13b)
-    // Ersetze diese Strings mit den echten sub-Werten aus eurer /profile Debug-Ansicht im Frontend.
+    // ✅ Auth0 "sub" IDs
     private static final String STUDENT_SUB = "auth0|695e5f38bd9509a108b5604d";
     private static final String TUTOR_SUB   = "auth0|695e66fcd58fa9152ab1d6f8";
     private static final String ADMIN_SUB   = "auth0|695fda2b6f4f6b2870b04cbd";
 
-
     @Bean
-    public CommandLineRunner loadData(TutorRepository tutorRepository,
-                                     AvailabilityRuleRepository availabilityRuleRepository,
-                                      ReviewRepository reviewRepository,
-                                      UserRepository userRepository,
-                                      StudentRepository studentRepository,
-                                      PlatformTransactionManager txManager) {
+    public CommandLineRunner loadData(
+            TutorRepository tutorRepository,
+            AvailabilityRuleRepository availabilityRuleRepository,
+            ReviewRepository reviewRepository,
+            UserRepository userRepository,
+            StudentRepository studentRepository,
+            PlatformTransactionManager txManager
+    ) {
 
-    TransactionTemplate tx = new TransactionTemplate(txManager);
+        TransactionTemplate tx = new TransactionTemplate(txManager);
 
-    return args -> {
-        tx.execute(status -> {
+        return args -> tx.execute(status -> {
+
             seedUsers(userRepository);
             seedStudents(userRepository, studentRepository);
 
@@ -60,7 +52,7 @@ public class DataLoader {
 
             LOG.info("Database empty. Loading initial tutor data…");
 
-            // ---------- Tutor:innen anlegen (OHNE IDs setzen!) ----------
+            // ---------- Tutor:innen anlegen ----------
             Tutor lisa = new Tutor();
             lisa.setName("Lisa Weber");
             lisa.setSubject("Mathe I");
@@ -79,7 +71,6 @@ public class DataLoader {
             jonas.setHourlyRate(20.0);
             jonas.setEmail("jonas@outlook.com");
 
-
             Tutor mia = new Tutor();
             mia.setName("Mia Hoffmann");
             mia.setSubject("BWL Grundlagen");
@@ -89,31 +80,51 @@ public class DataLoader {
             mia.setHourlyRate(22.0);
             mia.setEmail("mia@outlook.com");
 
-
             // In DB speichern – IDs werden von JPA vergeben
             List<Tutor> savedTutors = tutorRepository.saveAll(Arrays.asList(lisa, jonas, mia));
             LOG.info("Saved {} tutors.", savedTutors.size());
 
-            // Zur Übersicht:
             Tutor savedLisa = savedTutors.get(0);
             Tutor savedJonas = savedTutors.get(1);
-            Tutor savedMia = savedTutors.get(2);
+            Tutor savedMia  = savedTutors.get(2);
 
-            AvailabilityRule ar1 = new AvailabilityRule();
-            ar1.setTutorId(savedJonas.getId());
-            ar1.setDayOfWeek(java.time.DayOfWeek.TUESDAY);
-            ar1.setStartTime(java.time.LocalTime.of(14,0));
-            ar1.setEndTime(java.time.LocalTime.of(19,0));
-            
-            AvailabilityRule ar2 = new AvailabilityRule();
-            ar2.setTutorId(savedJonas.getId());
-            ar2.setDayOfWeek(java.time.DayOfWeek.WEDNESDAY);
-            ar2.setStartTime(java.time.LocalTime.of(14,0));
-            ar2.setEndTime(java.time.LocalTime.of(19,0));
-            
-            availabilityRuleRepository.saveAll(List.of(ar1, ar2));
+            // ---------- AvailabilityRules ----------
+            // Jonas: Di + Mi 14–19
+            AvailabilityRule j1 = new AvailabilityRule();
+            j1.setTutorId(savedJonas.getId());
+            j1.setDayOfWeek(DayOfWeek.TUESDAY);
+            j1.setStartTime(LocalTime.of(14, 0));
+            j1.setEndTime(LocalTime.of(19, 0));
 
-            // ---------- Reviews anlegen ----------
+            AvailabilityRule j2 = new AvailabilityRule();
+            j2.setTutorId(savedJonas.getId());
+            j2.setDayOfWeek(DayOfWeek.WEDNESDAY);
+            j2.setStartTime(LocalTime.of(14, 0));
+            j2.setEndTime(LocalTime.of(19, 0));
+
+            // Lisa: Freitag 10–16 (anpassen wie du willst)
+            AvailabilityRule l1 = new AvailabilityRule();
+            l1.setTutorId(savedLisa.getId());
+            l1.setDayOfWeek(DayOfWeek.FRIDAY);
+            l1.setStartTime(LocalTime.of(10, 0));
+            l1.setEndTime(LocalTime.of(16, 0));
+
+            // Mia: Sonntag + Montag 12–18 (anpassen wie du willst)
+            AvailabilityRule m1 = new AvailabilityRule();
+            m1.setTutorId(savedMia.getId());
+            m1.setDayOfWeek(DayOfWeek.SUNDAY);
+            m1.setStartTime(LocalTime.of(12, 0));
+            m1.setEndTime(LocalTime.of(18, 0));
+
+            AvailabilityRule m2 = new AvailabilityRule();
+            m2.setTutorId(savedMia.getId());
+            m2.setDayOfWeek(DayOfWeek.MONDAY);
+            m2.setStartTime(LocalTime.of(12, 0));
+            m2.setEndTime(LocalTime.of(18, 0));
+
+            availabilityRuleRepository.saveAll(List.of(j1, j2, l1, m1, m2));
+
+            // ---------- Reviews ----------
             Review r1a = new Review();
             r1a.setStars(5);
             r1a.setText("Lisa erklärt Mathe super verständlich!");
@@ -139,108 +150,105 @@ public class DataLoader {
             r3.setTutor(savedMia);
 
             reviewRepository.saveAll(Arrays.asList(r1a, r1b, r2, r3));
-            LOG.info("Initial tutor + review data loaded successfully.");
+            LOG.info("Initial tutor + availability + review data loaded successfully.");
 
             return null;
         });
-    };
-}
-private void seedUsers(UserRepository userRepository) {
-    upsertUser(userRepository, STUDENT_SUB, "Thani", "thanhhiendang521@gmail.com", Role.STUDENT);
-    upsertUser(userRepository, TUTOR_SUB,   "Thani", "thanhhiendang521@yahoo.de",  Role.TUTOR);
-    upsertUser(userRepository, ADMIN_SUB,   "Jarmila", "j.dauth@outlook.com",      Role.ADMIN);
-    upsertUser(userRepository, "auth0|69600b3a6f4f6b2870b06d21",   "Thamila", "dieuhienmy@yahoo.de", Role.ADMIN);
+    }
 
-    //Fake Students nur für DB 
-    upsertUser(userRepository, "auth0|seed-student-1", "Stella Beckham", "anna@student.de", Role.STUDENT);
-    upsertUser(userRepository, "auth0|seed-student-2", "Nico Freund",  "ben@student.de",  Role.STUDENT);
-    upsertUser(userRepository, "auth0|seed-student-3", "Chris Bergmann","chris@student.de",Role.STUDENT);
-}
+    private void seedUsers(UserRepository userRepository) {
+        upsertUser(userRepository, STUDENT_SUB, "Thani", "thanhhiendang521@gmail.com", Role.STUDENT);
+        upsertUser(userRepository, TUTOR_SUB,   "Thani", "thanhhiendang521@yahoo.de",  Role.TUTOR);
+        upsertUser(userRepository, ADMIN_SUB,   "Jarmila", "j.dauth@outlook.com",      Role.ADMIN);
+        upsertUser(userRepository, "auth0|69600b3a6f4f6b2870b06d21", "Thamila", "dieuhienmy@yahoo.de", Role.ADMIN);
 
-private void upsertUser(UserRepository userRepository,
-                        String oauthId,
-                        String name,
-                        String email,
-                        Role role) {
+        // Fake Students nur für DB
+        upsertUser(userRepository, "auth0|seed-student-1", "Stella Beckham", "anna@student.de", Role.STUDENT);
+        upsertUser(userRepository, "auth0|seed-student-2", "Nico Freund", "ben@student.de", Role.STUDENT);
+        upsertUser(userRepository, "auth0|seed-student-3", "Chris Bergmann", "chris@student.de", Role.STUDENT);
+    }
 
-    User u = userRepository.findByOauthId(oauthId).orElseGet(User::new);
+    private void upsertUser(UserRepository userRepository,
+                            String oauthId,
+                            String name,
+                            String email,
+                            Role role) {
 
-    u.setOauthId(oauthId);
-    u.setName(name);
-    u.setEmail(email);
-    u.setRole(role);
+        User u = userRepository.findByOauthId(oauthId).orElseGet(User::new);
+        u.setOauthId(oauthId);
+        u.setName(name);
+        u.setEmail(email);
+        u.setRole(role);
 
-    userRepository.save(u);
-}
-private void seedStudents(UserRepository userRepository, StudentRepository studentRepository) {
+        userRepository.save(u);
+    }
 
-    seedOneStudent(userRepository, studentRepository,
-            "auth0|seed-student-1",
-            "Ich bin Stella und suche Hilfe in DB.",
-            "Informatik",
-            "Datenbanken",
-            3,
-            "HTWG Konstanz",
-            "https://plus.unsplash.com/premium_photo-1729581091962-8da050639694?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-    );
-
-    seedOneStudent(userRepository, studentRepository,
-            "auth0|seed-student-2",
-            "Nico hier – Mathe ist pain.",
-            "Wirtschaftsinformatik",
-            "Mathe I",
-            2,
-            "HTWG Konstanz",
-            "https://images.unsplash.com/photo-1520883491007-4920448f8310?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-    );
-
-    seedOneStudent(userRepository, studentRepository,
-            "auth0|seed-student-3",
-            "Chris – brauche Java Support.",
-            "Informatik",
-            "Programmieren",
-            1,
-            "HTWG Konstanz",
-            "https://images.unsplash.com/photo-1667285435776-baa546a57f87?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-    );
+    private void seedStudents(UserRepository userRepository, StudentRepository studentRepository) {
 
         seedOneStudent(userRepository, studentRepository,
-            "auth0|695e5f38bd9509a108b5604d",
-            "Brauche Hilfe bei WebTech T-T",
-            "Wirtschaftsinformatik",
-            "Web-Technologien",
-            7,
-            "HTWG Konstanz",
-            "https://plus.unsplash.com/premium_photo-1732757787045-d903f2e88b08?q=80&w=1354&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-    );
+                "auth0|seed-student-1",
+                "Ich bin Stella und suche Hilfe in DB.",
+                "Informatik",
+                "Datenbanken",
+                3,
+                "HTWG Konstanz",
+                "https://plus.unsplash.com/premium_photo-1729581091962-8da050639694?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        );
 
-    
-}
+        seedOneStudent(userRepository, studentRepository,
+                "auth0|seed-student-2",
+                "Nico hier – Mathe ist pain.",
+                "Wirtschaftsinformatik",
+                "Mathe I",
+                2,
+                "HTWG Konstanz",
+                "https://images.unsplash.com/photo-1520883491007-4920448f8310?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        );
 
-private void seedOneStudent(UserRepository userRepository,
-                            StudentRepository studentRepository,
-                            String oauthId,
-                            String aboutMe,
-                            String fieldOfStudy,
-                            String subject,
-                            Integer semester,
-                            String university,
-                            String imageUrl) {
-User user = userRepository.findByOauthId(oauthId).orElseThrow();
+        seedOneStudent(userRepository, studentRepository,
+                "auth0|seed-student-3",
+                "Chris – brauche Java Support.",
+                "Informatik",
+                "Programmieren",
+                1,
+                "HTWG Konstanz",
+                "https://images.unsplash.com/photo-1667285435776-baa546a57f87?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        );
 
-    User managed = userRepository.getReferenceById(user.getId());
+        seedOneStudent(userRepository, studentRepository,
+                STUDENT_SUB,
+                "Brauche Hilfe bei WebTech T-T",
+                "Wirtschaftsinformatik",
+                "Web-Technologien",
+                7,
+                "HTWG Konstanz",
+                "https://plus.unsplash.com/premium_photo-1732757787045-d903f2e88b08?q=80&w=1354&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        );
+    }
 
-    Student s = studentRepository.findById(user.getId())
-            .orElseGet(Student::new);
+    private void seedOneStudent(UserRepository userRepository,
+                                StudentRepository studentRepository,
+                                String oauthId,
+                                String aboutMe,
+                                String fieldOfStudy,
+                                String subject,
+                                Integer semester,
+                                String university,
+                                String imageUrl) {
 
-s.setUser(managed); // wichtig, falls neu
-s.setAboutMe(aboutMe);
-s.setFieldOfStudy(fieldOfStudy);
-s.setSubject(subject);
-s.setSemester(semester);
-s.setUniversity(university);
-s.setImageUrl(imageUrl);
+        User user = userRepository.findByOauthId(oauthId).orElseThrow();
+        User managed = userRepository.getReferenceById(user.getId());
 
-studentRepository.save(s);
-}
+        Student s = studentRepository.findById(user.getId()).orElseGet(Student::new);
+
+        s.setUser(managed);
+        s.setAboutMe(aboutMe);
+        s.setFieldOfStudy(fieldOfStudy);
+        s.setSubject(subject);
+        s.setSemester(semester);
+        s.setUniversity(university);
+        s.setImageUrl(imageUrl);
+
+        studentRepository.save(s);
+    }
 }

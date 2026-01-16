@@ -22,6 +22,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -154,7 +155,7 @@ private void seedStudents(UserRepository userRepository, StudentRepository stude
             "auth0|seed-student-1",
             "Ich bin Stella und suche Hilfe in DB.",
             "Informatik",
-            "Datenbanken",
+            List.of("Datenbanken"),
             3,
             "HTWG Konstanz",
             "https://plus.unsplash.com/premium_photo-1729581091962-8da050639694?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -164,7 +165,7 @@ private void seedStudents(UserRepository userRepository, StudentRepository stude
             "auth0|seed-student-2",
             "Nico hier – Mathe ist pain.",
             "Wirtschaftsinformatik",
-            "Mathe I",
+            List.of("Mathe 1", "Datenbanken"),
             2,
             "HTWG Konstanz",
             "https://images.unsplash.com/photo-1520883491007-4920448f8310?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -174,7 +175,7 @@ private void seedStudents(UserRepository userRepository, StudentRepository stude
             "auth0|seed-student-3",
             "Chris – brauche Java Support.",
             "Informatik",
-            "Programmieren",
+            List.of("Programmieren", "Mathe 1", "BWL"),
             1,
             "HTWG Konstanz",
             "https://images.unsplash.com/photo-1667285435776-baa546a57f87?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -184,7 +185,7 @@ private void seedStudents(UserRepository userRepository, StudentRepository stude
             "auth0|695e5f38bd9509a108b5604d",
             "Brauche Hilfe bei WebTech T-T",
             "Wirtschaftsinformatik",
-            "Web-Technologien",
+            List.of("Web-Technologien"),
             7,
             "HTWG Konstanz",
             "https://plus.unsplash.com/premium_photo-1732757787045-d903f2e88b08?q=80&w=1354&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -198,7 +199,7 @@ private void seedOneStudent(UserRepository userRepository,
                             String oauthId,
                             String aboutMe,
                             String fieldOfStudy,
-                            String subject,
+                            List<String> subject,
                             Integer semester,
                             String university,
                             String imageUrl) {
@@ -212,7 +213,7 @@ User user = userRepository.findByOauthId(oauthId).orElseThrow();
 s.setUser(managed); // wichtig, falls neu
 s.setAboutMe(aboutMe);
 s.setFieldOfStudy(fieldOfStudy);
-s.setSubject(subject);
+s.setSubjects(new ArrayList<>(subject));
 s.setSemester(semester);
 s.setUniversity(university);
 s.setImageUrl(imageUrl);

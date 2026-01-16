@@ -41,14 +41,14 @@ public class StudentController {
         return repo.findById(id).orElseThrow();
     }
 
-    // ✅ Private: eigenes Profil (über Auth0 sub)
+    // Private: eigenes Profil (über Auth0 sub)
     @GetMapping("/me")
     public Student getMe(@AuthenticationPrincipal Jwt jwt) {
         String oauthId = jwt.getSubject(); // sub
         return repo.findByUser_OauthId(oauthId).orElseThrow();
     }
 
-    // ✅ Private: eigenes Profil updaten (nur Student-Felder)
+    //  Private: eigenes Profil updaten (nur Student-Felder)
     @PutMapping("/me")
     public Student updateMe(@AuthenticationPrincipal Jwt jwt, @RequestBody Student incoming) {
         String oauthId = jwt.getSubject();
@@ -57,7 +57,7 @@ public class StudentController {
         // nur Profilfelder updaten
         existing.setAboutMe(incoming.getAboutMe());
         existing.setFieldOfStudy(incoming.getFieldOfStudy());
-        existing.setSubject(incoming.getSubject());
+        existing.setSubjects(incoming.getSubjects()); 
         existing.setSemester(incoming.getSemester());
         existing.setUniversity(incoming.getUniversity());
         existing.setImageUrl(incoming.getImageUrl());

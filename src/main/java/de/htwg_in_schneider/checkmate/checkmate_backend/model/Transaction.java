@@ -11,9 +11,10 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "buyer_oauth_id", nullable = false)
     private String studentOauthId;
-    private String studentName;
 
+    private String studentName;
     private String buyerEmail;
 
     @Column(length = 2000)

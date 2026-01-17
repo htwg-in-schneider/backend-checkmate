@@ -10,6 +10,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -156,99 +157,102 @@ public class DataLoader {
         });
     }
 
-    private void seedUsers(UserRepository userRepository) {
-        upsertUser(userRepository, STUDENT_SUB, "Thani", "thanhhiendang521@gmail.com", Role.STUDENT);
-        upsertUser(userRepository, TUTOR_SUB,   "Thani", "thanhhiendang521@yahoo.de",  Role.TUTOR);
-        upsertUser(userRepository, ADMIN_SUB,   "Jarmila", "j.dauth@outlook.com",      Role.ADMIN);
-        upsertUser(userRepository, "auth0|69600b3a6f4f6b2870b06d21", "Thamila", "dieuhienmy@yahoo.de", Role.ADMIN);
+private void seedUsers(UserRepository userRepository) {
+    upsertUser(userRepository, STUDENT_SUB, "Thani", "thanhhiendang521@gmail.com", Role.STUDENT);
+    upsertUser(userRepository, TUTOR_SUB,   "Thani", "thanhhiendang521@yahoo.de",  Role.TUTOR);
+    upsertUser(userRepository, ADMIN_SUB,   "Jarmila", "j.dauth@outlook.com",      Role.ADMIN);
+    upsertUser(userRepository, "auth0|69600b3a6f4f6b2870b06d21",   "Thamila", "dieuhienmy@yahoo.de", Role.ADMIN);
 
-        // Fake Students nur für DB
-        upsertUser(userRepository, "auth0|seed-student-1", "Stella Beckham", "anna@student.de", Role.STUDENT);
-        upsertUser(userRepository, "auth0|seed-student-2", "Nico Freund", "ben@student.de", Role.STUDENT);
-        upsertUser(userRepository, "auth0|seed-student-3", "Chris Bergmann", "chris@student.de", Role.STUDENT);
-    }
+    //Fake Students nur für DB 
+    upsertUser(userRepository, "auth0|seed-student-1", "Stella Beckham", "stella@student.de", Role.STUDENT);
+    upsertUser(userRepository, "auth0|seed-student-2", "Nico Freund",  "nico@student.de",  Role.STUDENT);
+    upsertUser(userRepository, "auth0|seed-student-3", "Chris Bergmann","chris@student.de",Role.STUDENT);
+}
 
-    private void upsertUser(UserRepository userRepository,
+private void upsertUser(UserRepository userRepository,
+                        String oauthId,
+                        String name,
+                        String email,
+                        Role role) {
+
+    User u = userRepository.findByOauthId(oauthId).orElseGet(User::new);
+
+    u.setOauthId(oauthId);
+    u.setName(name);
+    u.setEmail(email);
+    u.setRole(role);
+
+    userRepository.save(u);
+}
+private void seedStudents(UserRepository userRepository, StudentRepository studentRepository) {
+
+    seedOneStudent(userRepository, studentRepository,
+            "auth0|seed-student-1",
+            "Ich bin Stella und suche Hilfe in DB.",
+            "Informatik",
+            List.of("Datenbanken"),
+            3,
+            "HTWG Konstanz",
+            "https://plus.unsplash.com/premium_photo-1729581091962-8da050639694?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    );
+
+    seedOneStudent(userRepository, studentRepository,
+            "auth0|seed-student-2",
+            "Nico hier – Mathe ist pain.",
+            "Wirtschaftsinformatik",
+            List.of("Mathe 1", "Datenbanken"),
+            2,
+            "HTWG Konstanz",
+            "https://images.unsplash.com/photo-1520883491007-4920448f8310?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    );
+
+    seedOneStudent(userRepository, studentRepository,
+            "auth0|seed-student-3",
+            "Chris – brauche Java Support.",
+            "Informatik",
+            List.of("Programmieren", "Mathe 1", "BWL"),
+            1,
+            "HTWG Konstanz",
+            "https://images.unsplash.com/photo-1667285435776-baa546a57f87?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    );
+
+        seedOneStudent(userRepository, studentRepository,
+            "auth0|695e5f38bd9509a108b5604d",
+            "Brauche Hilfe bei WebTech T-T",
+            "Wirtschaftsinformatik",
+            List.of("Web-Technologien"),
+            7,
+            "HTWG Konstanz",
+            "https://plus.unsplash.com/premium_photo-1732757787045-d903f2e88b08?q=80&w=1354&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    );
+
+    
+}
+
+private void seedOneStudent(UserRepository userRepository,
+                            StudentRepository studentRepository,
                             String oauthId,
-                            String name,
-                            String email,
-                            Role role) {
+                            String aboutMe,
+                            String fieldOfStudy,
+                            List<String> subject,
+                            Integer semester,
+                            String university,
+                            String imageUrl) {
+User user = userRepository.findByOauthId(oauthId).orElseThrow();
 
-        User u = userRepository.findByOauthId(oauthId).orElseGet(User::new);
-        u.setOauthId(oauthId);
-        u.setName(name);
-        u.setEmail(email);
-        u.setRole(role);
+    User managed = userRepository.getReferenceById(user.getId());
 
-        userRepository.save(u);
-    }
+    Student s = studentRepository.findById(user.getId())
+            .orElseGet(Student::new);
 
-    private void seedStudents(UserRepository userRepository, StudentRepository studentRepository) {
+s.setUser(managed); // wichtig, falls neu
+s.setAboutMe(aboutMe);
+s.setFieldOfStudy(fieldOfStudy);
+s.setSubjects(new ArrayList<>(subject));
+s.setSemester(semester);
+s.setUniversity(university);
+s.setImageUrl(imageUrl);
 
-        seedOneStudent(userRepository, studentRepository,
-                "auth0|seed-student-1",
-                "Ich bin Stella und suche Hilfe in DB.",
-                "Informatik",
-                "Datenbanken",
-                3,
-                "HTWG Konstanz",
-                "https://plus.unsplash.com/premium_photo-1729581091962-8da050639694?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        );
-
-        seedOneStudent(userRepository, studentRepository,
-                "auth0|seed-student-2",
-                "Nico hier – Mathe ist pain.",
-                "Wirtschaftsinformatik",
-                "Mathe I",
-                2,
-                "HTWG Konstanz",
-                "https://images.unsplash.com/photo-1520883491007-4920448f8310?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        );
-
-        seedOneStudent(userRepository, studentRepository,
-                "auth0|seed-student-3",
-                "Chris – brauche Java Support.",
-                "Informatik",
-                "Programmieren",
-                1,
-                "HTWG Konstanz",
-                "https://images.unsplash.com/photo-1667285435776-baa546a57f87?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        );
-
-        seedOneStudent(userRepository, studentRepository,
-                STUDENT_SUB,
-                "Brauche Hilfe bei WebTech T-T",
-                "Wirtschaftsinformatik",
-                "Web-Technologien",
-                7,
-                "HTWG Konstanz",
-                "https://plus.unsplash.com/premium_photo-1732757787045-d903f2e88b08?q=80&w=1354&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        );
-    }
-
-    private void seedOneStudent(UserRepository userRepository,
-                                StudentRepository studentRepository,
-                                String oauthId,
-                                String aboutMe,
-                                String fieldOfStudy,
-                                String subject,
-                                Integer semester,
-                                String university,
-                                String imageUrl) {
-
-        User user = userRepository.findByOauthId(oauthId).orElseThrow();
-        User managed = userRepository.getReferenceById(user.getId());
-
-        Student s = studentRepository.findById(user.getId()).orElseGet(Student::new);
-
-        s.setUser(managed);
-        s.setAboutMe(aboutMe);
-        s.setFieldOfStudy(fieldOfStudy);
-        s.setSubject(subject);
-        s.setSemester(semester);
-        s.setUniversity(university);
-        s.setImageUrl(imageUrl);
-
-        studentRepository.save(s);
-    }
+studentRepository.save(s);
+}
 }

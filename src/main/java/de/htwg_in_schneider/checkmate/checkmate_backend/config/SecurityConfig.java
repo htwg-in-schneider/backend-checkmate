@@ -50,7 +50,12 @@ public class SecurityConfig {
 // Tutor anlegen / ändern / löschen -> Admin (auch hier: besser DB-check im Controller)
 .requestMatchers(HttpMethod.POST, "/api/tutors").authenticated()
 .requestMatchers(HttpMethod.PUT, "/api/tutors/**").authenticated()
+.requestMatchers(HttpMethod.PUT, "/api/users/**").authenticated()
+.requestMatchers(HttpMethod.PUT, "/api/students/**").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/students/**").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/students/**").authenticated()
 .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/matches/**").authenticated()
 
         // alles andere:
         .anyRequest().permitAll()

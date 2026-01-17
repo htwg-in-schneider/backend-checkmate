@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph; // WICHTIG
 import org.springframework.data.jpa.repository.JpaRepository;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.MatchDecision;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
 
 public interface MatchDecisionRepository extends JpaRepository<MatchDecision, Long> {
     

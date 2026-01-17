@@ -1,5 +1,3 @@
-# Use a multi-stage build to optimize the image size
-
 # Stage 1: Build the application
 FROM maven:3.9.4-eclipse-temurin-21 AS build
 WORKDIR /app

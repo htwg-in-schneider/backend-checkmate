@@ -24,7 +24,7 @@ public class UserController {
     }
 
     // PATCH /api/users/me -> Erlaubt Teil-Updates von Name/E-Mail
-    @PatchMapping("/me")
+    @PutMapping("/me")
     public User updateMe(@AuthenticationPrincipal Jwt jwt, @RequestBody User incoming) {
         User existing = userRepo.findByOauthId(jwt.getSubject())
                 .orElseThrow(() -> new RuntimeException("User nicht gefunden"));

@@ -1,28 +1,21 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.config;
 
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Category;
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Review;
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
-
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Role;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.UserRepository;
-
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.ReviewRepository;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorRepository;
-
-import de.htwg_in_schneider.checkmate.checkmate_backend.model.Student;
-import de.htwg_in_schneider.checkmate.checkmate_backend.repository.StudentRepository;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.*;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.ArrayList;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,24 +24,25 @@ public class DataLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
 
-    // ✅ Auth0 "sub" IDs (Iteration 13b)
-    // Ersetze diese Strings mit den echten sub-Werten aus eurer /profile Debug-Ansicht im Frontend.
+    // ✅ Auth0 "sub" IDs
     private static final String STUDENT_SUB = "auth0|695e5f38bd9509a108b5604d";
     private static final String TUTOR_SUB   = "auth0|695e66fcd58fa9152ab1d6f8";
     private static final String ADMIN_SUB   = "auth0|695fda2b6f4f6b2870b04cbd";
 
-
     @Bean
-    public CommandLineRunner loadData(TutorRepository tutorRepository,
-                                      ReviewRepository reviewRepository,
-                                      UserRepository userRepository,
-                                      StudentRepository studentRepository,
-                                      PlatformTransactionManager txManager) {
+    public CommandLineRunner loadData(
+            TutorRepository tutorRepository,
+            AvailabilityRuleRepository availabilityRuleRepository,
+            ReviewRepository reviewRepository,
+            UserRepository userRepository,
+            StudentRepository studentRepository,
+            PlatformTransactionManager txManager
+    ) {
 
-    TransactionTemplate tx = new TransactionTemplate(txManager);
+        TransactionTemplate tx = new TransactionTemplate(txManager);
 
-    return args -> {
-        tx.execute(status -> {
+        return args -> tx.execute(status -> {
+
             seedUsers(userRepository);
             seedStudents(userRepository, studentRepository);
 
@@ -59,13 +53,15 @@ public class DataLoader {
 
             LOG.info("Database empty. Loading initial tutor data…");
 
-            // ---------- Tutor:innen anlegen (OHNE IDs setzen!) ----------
+            // ---------- Tutor:innen anlegen ----------
             Tutor lisa = new Tutor();
             lisa.setName("Lisa Weber");
             lisa.setSubject("Mathe I");
             lisa.setSemester(5);
             lisa.setImage("https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=500&q=60");
             lisa.setCategory(Category.MATHE1);
+            lisa.setHourlyRate(25.0);
+            lisa.setEmail("lisa@outlook.com");
 
             Tutor jonas = new Tutor();
             jonas.setName("Jonas Keller");
@@ -73,6 +69,8 @@ public class DataLoader {
             jonas.setSemester(3);
             jonas.setImage("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=500&q=60");
             jonas.setCategory(Category.PROGRAMMIEREN);
+            jonas.setHourlyRate(20.0);
+            jonas.setEmail("jonas@outlook.com");
 
             Tutor mia = new Tutor();
             mia.setName("Mia Hoffmann");
@@ -80,17 +78,54 @@ public class DataLoader {
             mia.setSemester(4);
             mia.setImage("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80");
             mia.setCategory(Category.BWL1);
+            mia.setHourlyRate(22.0);
+            mia.setEmail("mia@outlook.com");
 
             // In DB speichern – IDs werden von JPA vergeben
             List<Tutor> savedTutors = tutorRepository.saveAll(Arrays.asList(lisa, jonas, mia));
             LOG.info("Saved {} tutors.", savedTutors.size());
 
-            // Zur Übersicht:
             Tutor savedLisa = savedTutors.get(0);
             Tutor savedJonas = savedTutors.get(1);
-            Tutor savedMia = savedTutors.get(2);
+            Tutor savedMia  = savedTutors.get(2);
 
-            // ---------- Reviews anlegen ----------
+            // ---------- AvailabilityRules ----------
+            // Jonas: Di + Mi 14–19
+            AvailabilityRule j1 = new AvailabilityRule();
+            j1.setTutorId(savedJonas.getId());
+            j1.setDayOfWeek(DayOfWeek.TUESDAY);
+            j1.setStartTime(LocalTime.of(14, 0));
+            j1.setEndTime(LocalTime.of(19, 0));
+
+            AvailabilityRule j2 = new AvailabilityRule();
+            j2.setTutorId(savedJonas.getId());
+            j2.setDayOfWeek(DayOfWeek.WEDNESDAY);
+            j2.setStartTime(LocalTime.of(14, 0));
+            j2.setEndTime(LocalTime.of(19, 0));
+
+            // Lisa: Freitag 10–16 (anpassen wie du willst)
+            AvailabilityRule l1 = new AvailabilityRule();
+            l1.setTutorId(savedLisa.getId());
+            l1.setDayOfWeek(DayOfWeek.FRIDAY);
+            l1.setStartTime(LocalTime.of(10, 0));
+            l1.setEndTime(LocalTime.of(16, 0));
+
+            // Mia: Sonntag + Montag 12–18 (anpassen wie du willst)
+            AvailabilityRule m1 = new AvailabilityRule();
+            m1.setTutorId(savedMia.getId());
+            m1.setDayOfWeek(DayOfWeek.SUNDAY);
+            m1.setStartTime(LocalTime.of(12, 0));
+            m1.setEndTime(LocalTime.of(18, 0));
+
+            AvailabilityRule m2 = new AvailabilityRule();
+            m2.setTutorId(savedMia.getId());
+            m2.setDayOfWeek(DayOfWeek.MONDAY);
+            m2.setStartTime(LocalTime.of(12, 0));
+            m2.setEndTime(LocalTime.of(18, 0));
+
+            availabilityRuleRepository.saveAll(List.of(j1, j2, l1, m1, m2));
+
+            // ---------- Reviews ----------
             Review r1a = new Review();
             r1a.setStars(5);
             r1a.setText("Lisa erklärt Mathe super verständlich!");
@@ -116,12 +151,12 @@ public class DataLoader {
             r3.setTutor(savedMia);
 
             reviewRepository.saveAll(Arrays.asList(r1a, r1b, r2, r3));
-            LOG.info("Initial tutor + review data loaded successfully.");
+            LOG.info("Initial tutor + availability + review data loaded successfully.");
 
             return null;
         });
-    };
-}
+    }
+
 private void seedUsers(UserRepository userRepository) {
     upsertUser(userRepository, STUDENT_SUB, "Thani", "thanhhiendang521@gmail.com", Role.STUDENT);
     upsertUser(userRepository, TUTOR_SUB,   "Thani", "thanhhiendang521@yahoo.de",  Role.TUTOR);

@@ -55,6 +55,7 @@ public class SecurityConfig {
 .requestMatchers(HttpMethod.DELETE, "/api/students/**").authenticated()
 .requestMatchers(HttpMethod.DELETE, "/api/students/**").authenticated()
 .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/matches/**").authenticated()
 
         // alles andere:
         .anyRequest().permitAll()

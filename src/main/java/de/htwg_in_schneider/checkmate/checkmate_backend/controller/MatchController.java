@@ -1,6 +1,8 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +11,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 
@@ -101,6 +104,28 @@ public List<User> mySentLikes(@AuthenticationPrincipal Jwt jwt) {
                         )
                 )
                 .toList();
+    }
+    @DeleteMapping("/like/{userId}")
+    public ResponseEntity<Void> removeLikeOrMatch(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long userId) { 
+         String myOauthId = jwt.getSubject();
+
+         User me = userRepo.findByOauthId(myOauthId)
+            .orElseThrow(() -> new RuntimeException("User nicht gefunden"));
+
+         Long meId = me.getId();
+         Long otherId = userId;
+
+    // 1) meinen Like löschen (Warten entfernen)
+         decisionRepo.findByFromUser_IdAndToUser_Id(meId, otherId)
+            .ifPresent(decisionRepo::delete);
+
+    // 2) falls es ein Match war: den Gegen-Like auch löschen (Match auflösen)
+          decisionRepo.findByFromUser_IdAndToUser_Id(otherId, meId)
+            .ifPresent(decisionRepo::delete);
+
+         return ResponseEntity.noContent().build();
     }
 }
 

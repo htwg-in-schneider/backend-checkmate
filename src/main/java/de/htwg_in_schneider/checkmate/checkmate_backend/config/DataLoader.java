@@ -129,8 +129,8 @@ private void seedUsers(UserRepository userRepository) {
     upsertUser(userRepository, "auth0|69600b3a6f4f6b2870b06d21",   "Thamila", "dieuhienmy@yahoo.de", Role.ADMIN);
 
     //Fake Students nur für DB 
-    upsertUser(userRepository, "auth0|seed-student-1", "Stella Beckham", "anna@student.de", Role.STUDENT);
-    upsertUser(userRepository, "auth0|seed-student-2", "Nico Freund",  "ben@student.de",  Role.STUDENT);
+    upsertUser(userRepository, "auth0|seed-student-1", "Stella Beckham", "stella@student.de", Role.STUDENT);
+    upsertUser(userRepository, "auth0|seed-student-2", "Nico Freund",  "nico@student.de",  Role.STUDENT);
     upsertUser(userRepository, "auth0|seed-student-3", "Chris Bergmann","chris@student.de",Role.STUDENT);
 }
 

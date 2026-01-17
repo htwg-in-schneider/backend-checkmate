@@ -1,6 +1,9 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.model;
 
+import java.util.Optional;
+
 import jakarta.persistence.*;
+
 
 @Entity
 @Table(
@@ -38,4 +41,7 @@ public class MatchDecision {
 
     public Decision getDecision() { return decision; }
     public void setDecision(Decision decision) { this.decision = decision; }
+
+
+
 }

@@ -56,25 +56,24 @@ public class SecurityConfig {
 
         return http.build();
     }
+ @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Erlaube dein Frontend-Origin explizit
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); 
-        
-        // Erlaube die Standard-Methoden
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        
-        // Erlaube notwendige Header (wichtig für Authorization-Header mit JWT)
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Origin", "Accept"));
-        
-        // Erlaube das Senden von Credentials (falls benötigt)
-        configuration.setAllowCredentials(true);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+    config.setAllowedOrigins(List.of(
+      "http://localhost:5173",
+      "https://htwg-in-schneider.github.io/frontend-checkmate/"   // <-- HIER deine GitHub Pages Origin rein (ohne /repo)
+    ));
+
+    config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+    config.setAllowedHeaders(List.of("Authorization","Content-Type","Origin","Accept"));
+    config.setExposedHeaders(List.of("Authorization"));
+
+    // ✅ Bei Bearer Token normalerweise false
+    config.setAllowCredentials(false);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
 }

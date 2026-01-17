@@ -57,22 +57,22 @@ public ResponseEntity<Student> getMe(@AuthenticationPrincipal Jwt jwt) {
             });
 }
     //  Private: eigenes Profil updaten (nur Student-Felder)
-    @PutMapping("/me")
-    public Student updateMe(@AuthenticationPrincipal Jwt jwt, @RequestBody Student incoming) {
-        String oauthId = jwt.getSubject();
-        Student existing = repo.findByUser_OauthId(oauthId).orElseThrow();
+@PutMapping("/me")
+public ResponseEntity<Student> updateMe(@AuthenticationPrincipal Jwt jwt, @RequestBody Student incoming) {
+    if (jwt == null) return ResponseEntity.status(401).build();
 
-        // nur Profilfelder updaten
-        existing.setAboutMe(incoming.getAboutMe());
-        existing.setFieldOfStudy(incoming.getFieldOfStudy());
-        existing.setSubjects(incoming.getSubjects()); 
-        existing.setSemester(incoming.getSemester());
-        existing.setUniversity(incoming.getUniversity());
-        existing.setImageUrl(incoming.getImageUrl());
+    String oauthId = jwt.getSubject();
+    Student existing = repo.findByUser_OauthId(oauthId).orElseThrow();
 
-        // NICHT existing.setUser(...)
-        return repo.save(existing);
-    }
+    existing.setAboutMe(incoming.getAboutMe());
+    existing.setFieldOfStudy(incoming.getFieldOfStudy());
+    existing.setSubjects(incoming.getSubjects());
+    existing.setSemester(incoming.getSemester());
+    existing.setUniversity(incoming.getUniversity());
+    existing.setImageUrl(incoming.getImageUrl());
+
+    return ResponseEntity.ok(repo.save(existing));
+}
 
     
 

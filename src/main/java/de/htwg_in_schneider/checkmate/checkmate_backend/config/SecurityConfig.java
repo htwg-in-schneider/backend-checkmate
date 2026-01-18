@@ -1,5 +1,4 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.config;
-import static org.springframework.security.config.Customizer.withDefaults;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,11 +16,7 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
     http
-      // falls ihr Cookies NICHT nutzt (bei JWT üblich):
       .csrf(csrf -> csrf.disable())
-
-      // CORS: wenn ihr schon @CrossOrigin nutzt, reicht oft das hier.
-      // Wenn ihr Probleme bekommt, sag Bescheid – dann machen wir ein richtiges CorsConfigurationSource Bean.
       .cors(Customizer.withDefaults())
 
       .authorizeHttpRequests(auth -> auth
@@ -36,23 +31,25 @@ public class SecurityConfig {
         ).permitAll()
 
         // -------- AUTHENTICATED USER --------
-        // Profil / eigene Buchungen / Checkout-POST / Chat
         .requestMatchers(
           "/api/profile",
           "/api/my/**",
           "/api/bookings",
           "/api/chat/**"
         ).authenticated()
-// -------- ADMIN --------
-// ✅ Admin-Endpunkte brauchen Login, Admin-Check machen wir im Controller via DB
-.requestMatchers("/api/admin/**").authenticated()
 
-// Tutor anlegen / ändern / löschen -> Admin (auch hier: besser DB-check im Controller)
-.requestMatchers(HttpMethod.POST, "/api/tutors").authenticated()
-.requestMatchers(HttpMethod.PUT, "/api/tutors/**").authenticated()
-.requestMatchers(HttpMethod.DELETE, "/api/tutors/**").authenticated()
+        // ✅ Checkout MUSS auth sein (sonst jwt == null / 500)
+        .requestMatchers(HttpMethod.POST, "/api/transactions/checkout").authenticated()
 
-        // alles andere:
+        // -------- ADMIN --------
+        .requestMatchers("/api/admin/**").authenticated()
+
+        // Tutor anlegen / ändern / löschen (Admin-Check macht ihr im Controller via DB)
+        .requestMatchers(HttpMethod.POST, "/api/tutors").authenticated()
+        .requestMatchers(HttpMethod.PUT, "/api/tutors/**").authenticated()
+        .requestMatchers(HttpMethod.DELETE, "/api/tutors/**").authenticated()
+
+        // alles andere
         .anyRequest().permitAll()
       )
 

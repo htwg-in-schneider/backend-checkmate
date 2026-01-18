@@ -5,8 +5,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+// BookingRepository.java
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    
+    @Modifying
+    @Query("delete from Booking b where b.id = :id and b.studentOauthId = :studentOauthId")
+    int deleteOwned(@Param("id") Long id, @Param("studentOauthId") String studentOauthId);
+  
 
     List<Booking> findAllByOrderByStartAtDesc();
 

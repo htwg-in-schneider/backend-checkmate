@@ -25,6 +25,9 @@ public class Message {
     @Column(nullable = false)
     private Sender sender;
 
+    @Column(nullable = false, length = 200)
+    private String senderName;
+
     @Column(nullable = false, length = 2000)
     private String text;
 
@@ -47,6 +50,10 @@ public class Message {
 
     public Sender getSender() { return sender; }
     public void setSender(Sender sender) { this.sender = sender; }
+
+    public String getSenderName() { return senderName; }
+    public void setSenderName(String senderName) { this.senderName = senderName; }
+
 
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }

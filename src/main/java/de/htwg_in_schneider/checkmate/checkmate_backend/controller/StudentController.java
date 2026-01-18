@@ -1,13 +1,19 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.controller;
 
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.Role;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Student;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.StudentRepository;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.UserRepository;
+import jakarta.transaction.Transactional;
+
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "*") // Hier ergänzen
@@ -15,12 +21,46 @@ import java.util.List;
 public class StudentController {
 
     private final StudentRepository repo;
-    
+    private UserRepository userRepo;
 
-    public StudentController(StudentRepository repo) {
+    public StudentController(StudentRepository repo, UserRepository userRepo) {
         this.repo = repo;
+        this.userRepo = userRepo;
     }
+    @PostMapping
+    @Transactional // ✅ Wichtig für die Speicherung in zwei Tabellen
+    public Student createStudent(@RequestBody Map<String, Object> payload) {
+        
+        // 1. User-Objekt erstellen (Identität)
+        User newUser = new User();
+        newUser.setName((String) payload.get("name"));
+        newUser.setEmail((String) payload.get("email"));
+        newUser.setRole(Role.STUDENT);
+        
+        // ✅ Essentiell: Da oauthId in der DB nicht null sein darf
+        newUser.setOauthId("manual|" + System.currentTimeMillis()); 
+        
+        User savedUser = userRepo.save(newUser); // ✅ Jetzt ist userRepo nicht mehr null
 
+        // 2. Student-Objekt erstellen (Profil)
+        Student student = new Student();
+        student.setUser(savedUser); // ✅ Verknüpfung über @MapsId
+        student.setAboutMe((String) payload.get("aboutMe"));
+        student.setFieldOfStudy((String) payload.get("fieldOfStudy"));
+        student.setUniversity((String) payload.get("university"));
+        student.setImageUrl((String) payload.get("imageUrl"));
+
+        // ✅ Sicherer Umgang mit Semester-Zahl (verhindert Cast-Exception)
+        if (payload.get("semester") != null) {
+            student.setSemester(Integer.parseInt(payload.get("semester").toString()));
+        }
+
+        if (payload.containsKey("subjects") && payload.get("subjects") instanceof List) {
+            student.setSubjects((List<String>) payload.get("subjects"));
+        }
+
+        return repo.save(student);
+    }
     @GetMapping
     public List<Student> getAll(@AuthenticationPrincipal Jwt jwt) {
         if (jwt != null) {
@@ -73,8 +113,4 @@ public ResponseEntity<Student> updateMe(@AuthenticationPrincipal Jwt jwt, @Reque
 
     return ResponseEntity.ok(repo.save(existing));
 }
-
-    
-
-    // ❌ POST bewusst entfernt (Student hängt an User, das ist sonst unsauber)
 }

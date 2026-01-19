@@ -1,19 +1,25 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "tutor") // optional, aber sauber
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Tutor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String ownerSub;
+
+    @Column(unique = true)
+    private String oauthId; 
 
     private String name;
     private String subject;
@@ -22,7 +28,6 @@ public class Tutor {
     private Double hourlyRate;
     private String email;
 
-    // NEU: Category-Feld, passend zu eurem Enum
     @Enumerated(EnumType.STRING)
     private Category category;
 
@@ -30,8 +35,7 @@ public class Tutor {
     @JsonIgnore
     private List<Review> reviews = new ArrayList<>();
 
-    public Tutor() {
-    }
+    public Tutor() {}
 
     public Tutor(Long id, String name, String subject, int semester, String image, Double hourlyRate, String email) {
         this.id = id;
@@ -41,16 +45,32 @@ public class Tutor {
         this.image = image;
         this.hourlyRate = hourlyRate;
         this.email = email;
-
     }
 
-    // Getter & Setter
+    // ===== Getter & Setter =====
+
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getOwnerSub() {
+        return ownerSub;
+    }
+
+    public void setOwnerSub(String ownerSub) {
+        this.ownerSub = ownerSub;
+    }
+
+    public String getOauthId() {
+        return oauthId;
+    }
+
+    public void setOauthId(String oauthId) {
+        this.oauthId = oauthId;
     }
 
     public String getName() {
@@ -92,7 +112,6 @@ public class Tutor {
     public void setHourlyRate(Double hourlyRate) {
         this.hourlyRate = hourlyRate;
     }
-    
 
     public String getEmail() {
         return email;
@@ -102,8 +121,6 @@ public class Tutor {
         this.email = email;
     }
 
-
-    // NEU: Category
     public Category getCategory() {
         return category;
     }
@@ -112,23 +129,22 @@ public class Tutor {
         this.category = category;
     }
 
-    // Reviews
     public List<Review> getReviews() {
         return reviews;
     }
-    
+
     public void setReviews(List<Review> reviews) {
         this.reviews = reviews;
     }
-    
+
     public void addReview(Review review) {
         this.reviews.add(review);
-        review.setTutor(this); 
+        review.setTutor(this);
     }
-    
+
     public void removeReview(Review review) {
         this.reviews.remove(review);
-        review.setTutor(null); 
+        review.setTutor(null);
     }
 
     // equals / hashCode nur über id
@@ -146,17 +162,18 @@ public class Tutor {
         return id != null ? id.hashCode() : 0;
     }
 
-    // toString angepasst auf Tutor-Felder
     @Override
     public String toString() {
         return "Tutor{" +
                 "id=" + id +
+                ", ownerSub='" + ownerSub + '\'' +
                 ", name='" + name + '\'' +
                 ", subject='" + subject + '\'' +
                 ", semester=" + semester +
                 ", image='" + image + '\'' +
                 ", category=" + category +
-                ", hourly rate=" + hourlyRate +
+                ", hourlyRate=" + hourlyRate +
+                ", email='" + email + '\'' +
                 '}';
     }
 }

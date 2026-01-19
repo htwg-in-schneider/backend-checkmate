@@ -8,6 +8,10 @@ import java.util.List;
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
     List<Message> findByStudentOauthIdAndTutorIdOrderByCreatedAtAsc(String studentOauthId, Long tutorId);
-
     List<Message> findByStudentOauthIdOrderByCreatedAtDesc(String studentOauthId);
+
+    List<Message> findByTutorIdOrderByCreatedAtDesc(Long tutorId);
+    List<Message> findByTutorIdAndStudentOauthIdOrderByCreatedAtAsc(Long tutorId, String studentOauthId);
+
+    
 }

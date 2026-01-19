@@ -6,24 +6,18 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "messages")
-public class Message {
-
-    public enum Sender { STUDENT, TUTOR }
+@Table(name = "direct_messages")
+public class DirectMessage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long tutorId;
+    @Column(nullable = false, length = 200)
+    private String senderOauthId;
 
     @Column(nullable = false, length = 200)
-    private String studentOauthId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Sender sender;
+    private String receiverOauthId;
 
     @Column(nullable = false, length = 200)
     private String senderName;
@@ -42,18 +36,14 @@ public class Message {
 
     public Long getId() { return id; }
 
-    public Long getTutorId() { return tutorId; }
-    public void setTutorId(Long tutorId) { this.tutorId = tutorId; }
+    public String getSenderOauthId() { return senderOauthId; }
+    public void setSenderOauthId(String senderOauthId) { this.senderOauthId = senderOauthId; }
 
-    public String getStudentOauthId() { return studentOauthId; }
-    public void setStudentOauthId(String studentOauthId) { this.studentOauthId = studentOauthId; }
-
-    public Sender getSender() { return sender; }
-    public void setSender(Sender sender) { this.sender = sender; }
+    public String getReceiverOauthId() { return receiverOauthId; }
+    public void setReceiverOauthId(String receiverOauthId) { this.receiverOauthId = receiverOauthId; }
 
     public String getSenderName() { return senderName; }
     public void setSenderName(String senderName) { this.senderName = senderName; }
-
 
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }

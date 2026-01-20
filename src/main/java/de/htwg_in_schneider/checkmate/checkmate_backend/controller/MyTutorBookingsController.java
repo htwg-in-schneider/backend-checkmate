@@ -67,65 +67,44 @@ public class MyTutorBookingsController {
         return ResponseEntity.ok(bookings);
     }
     @DeleteMapping("/tutor-bookings/{id}")
-    @Transactional
-    public ResponseEntity<?> cancelAsTutor(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
-        if (jwt == null) return ResponseEntity.status(401).body(Map.of("message", "Missing JWT"));
-    
-        String sub = jwt.getSubject();
-        User u = userRepo.findByOauthId(sub).orElse(null);
-        if (u == null) return ResponseEntity.status(401).body(Map.of("message", "User not found"));
-    
-        boolean isAdmin = u.getRole() == Role.ADMIN;
-        if (!isAdmin && u.getRole() != Role.TUTOR) {
-            return ResponseEntity.status(403).body(Map.of("message", "Only TUTOR or ADMIN can cancel tutor bookings"));
-        }
-    
-        // ✅ Booking VOR dem Löschen laden (sonst fehlen Daten für Message)
-        Booking b = bookingRepo.findById(id).orElse(null);
-        if (b == null) return ResponseEntity.status(404).body(Map.of("message", "Booking not found"));
-    
-        String tutorName = (u.getName() != null && !u.getName().isBlank()) ? u.getName() : "Tutor";
-    
-        int deleted;
-        if (isAdmin) {
-            bookingRepo.deleteById(id);
-            deleted = 1;
-        } else {
-            Tutor t = tutorRepo.findByOauthId(sub).orElse(null);
-            if (t == null) return ResponseEntity.status(403).body(Map.of("message", "Tutor profile not found"));
-    
-            tutorName = (t.getName() != null && !t.getName().isBlank()) ? t.getName() : tutorName;
-    
-            // Tutor darf nur eigene Buchungen stornieren
-            if (!java.util.Objects.equals(b.getTutorId(), t.getId())) {
-                return ResponseEntity.status(403).body(Map.of("message", "Not your booking"));
-            }
-    
-            deleted = bookingRepo.deleteByTutor(id, t.getId());
-        }
-    
-        if (deleted == 0) {
-            return ResponseEntity.status(404).body(Map.of("message", "Booking not found (or not yours)"));
-        }
-    
-        // ✅ Message erzeugen (Tutor -> Student)
-        Message m = new Message();
-        m.setTutorId(b.getTutorId());
-        m.setStudentOauthId(b.getStudentOauthId());
-        m.setSender(Message.Sender.TUTOR);
-        m.setSenderName(tutorName);
-    
-        String text = "Stornierung: Ich muss die Stunde am "
-                + b.getStartAt() + " (" + b.getDurationMinutes() + " Min) leider absagen.";
-        m.setText(text);
-    
-        messageRepo.save(m);
-    
-        // ✅ studentOauthId zurückgeben, damit Frontend direkt Chat öffnen kann
-        return ResponseEntity.ok(Map.of(
-                "message", "Booking cancelled",
-                "studentOauthId", b.getStudentOauthId()
-        ));
+@Transactional
+public ResponseEntity<?> cancelAsTutor(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+    if (jwt == null) return ResponseEntity.status(401).body(Map.of("message", "Missing JWT"));
+
+    String sub = jwt.getSubject();
+    User u = userRepo.findByOauthId(sub).orElse(null);
+    if (u == null) return ResponseEntity.status(401).body(Map.of("message", "User not found"));
+
+    boolean isAdmin = u.getRole() == Role.ADMIN;
+    if (!isAdmin && u.getRole() != Role.TUTOR) {
+        return ResponseEntity.status(403).body(Map.of("message", "Only TUTOR or ADMIN can cancel tutor bookings"));
     }
+
+    // Booking laden (für Ownership-Check)
+    Booking b = bookingRepo.findById(id).orElse(null);
+    if (b == null) return ResponseEntity.status(404).body(Map.of("message", "Booking not found"));
+
+    int deleted;
+    if (isAdmin) {
+        bookingRepo.deleteById(id);
+        deleted = 1;
+    } else {
+        Tutor t = tutorRepo.findByOauthId(sub).orElse(null);
+        if (t == null) return ResponseEntity.status(403).body(Map.of("message", "Tutor profile not found"));
+
+        // Tutor darf nur eigene Buchungen stornieren
+        if (!Objects.equals(b.getTutorId(), t.getId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Not your booking"));
+        }
+
+        deleted = bookingRepo.deleteByTutor(id, t.getId());
+    }
+
+    if (deleted == 0) {
+        return ResponseEntity.status(404).body(Map.of("message", "Booking not found (or not yours)"));
+    }
+
+    return ResponseEntity.ok(Map.of("message", "Booking cancelled"));
+}
     
 }

@@ -3,13 +3,18 @@ package de.htwg_in_schneider.checkmate.checkmate_backend.controller;
 import de.htwg_in_schneider.checkmate.checkmate_backend.dto.OfferCreateRequest;
 import de.htwg_in_schneider.checkmate.checkmate_backend.dto.OfferResponse;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.Offer;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.Role;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.OfferRepository;
-
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorRepository;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import java.net.URI;
 import java.util.List;
 
@@ -18,72 +23,92 @@ import java.util.List;
 public class OfferController {
 
     private final OfferRepository offerRepository;
+    private final UserRepository userRepository;
+    private final TutorRepository tutorRepository;
 
-    public OfferController(OfferRepository offerRepository) {
+    public OfferController(OfferRepository offerRepository,
+                           UserRepository userRepository,
+                           TutorRepository tutorRepository) {
         this.offerRepository = offerRepository;
+        this.userRepository = userRepository;
+        this.tutorRepository = tutorRepository;
     }
 
-    // ========== CREATE ==========
-    // POST /api/offers
     @PostMapping
-    public ResponseEntity<OfferResponse> createOffer(
-            @AuthenticationPrincipal Jwt jwt,
-            @RequestBody OfferCreateRequest req
-    ) {
-        // Auth0 "sub" = eindeutige User-ID
-        String ownerSub = jwt.getSubject();
+    public ResponseEntity<OfferResponse> create(@AuthenticationPrincipal Jwt jwt,
+                                                @RequestBody OfferCreateRequest body) {
+        if (jwt == null) return ResponseEntity.status(401).build();
+        String me = jwt.getSubject();
+        
 
-        // Basic Validation
-        if (req.title == null || req.title.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
+        // 1) User laden + Rolle prüfen
+        User u = userRepository.findByOauthId(me)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        if (u.getRole() != Role.TUTOR && u.getRole() != Role.ADMIN) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nur Tutor:innen dürfen Angebote erstellen.");
         }
-        if (req.subject == null || req.subject.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
 
-        Offer offer = new Offer();
-        offer.setOwnerSub(ownerSub);
-        offer.setTitle(req.title.trim());
-        offer.setSubject(req.subject.trim());
-        offer.setDescription(req.description);
-        offer.setHourlyRate(req.hourlyRate != null ? req.hourlyRate : 20);
-        offer.setDurationMinutes(req.durationMinutes != null ? req.durationMinutes : 60);
-        offer.setLocation(req.location != null ? req.location : "Online");
+        // 2) Tutor-Profil zu Auth0-User finden oder anlegen (nur weil Rolle Tutor/Admin!)
+        Tutor t = tutorRepository.findByOauthId(me).orElseGet(() -> {
+            Tutor nt = new Tutor();
+            nt.setOauthId(me);
+            nt.setName((u.getName() != null && !u.getName().isBlank()) ? u.getName() : "Tutor");
+            // optional defaults:
+            // nt.setSubject("...");
+            // nt.setSemester(1);
+            // nt.setImage(null);
+            return tutorRepository.save(nt);
+        });
 
-        Offer saved = offerRepository.save(offer);
+        // 3) Offer speichern (wichtig: ownerSub setzen!)
+        Offer o = new Offer();
+        o.setOwnerSub(me);
+        o.setTutorId(t.getId());
+        o.setSubject(body.subject);
+        o.setSemester(body.semester != null ? body.semester : 1);
+        o.setHourlyRate(body.hourlyRate);
 
+        Offer saved = offerRepository.save(o);
+
+        OfferResponse resp = toResponse(saved);
+
+        // 201 Created + Location Header
         return ResponseEntity
                 .created(URI.create("/api/offers/" + saved.getId()))
-                .body(toResponse(saved));
+                .body(resp);
     }
 
-    // ========== READ MINE ==========
-    // GET /api/offers/mine
     @GetMapping("/mine")
-    public List<OfferResponse> getMyOffers(@AuthenticationPrincipal Jwt jwt) {
-        String ownerSub = jwt.getSubject();
-        return offerRepository.findByOwnerSubOrderByCreatedAtDesc(ownerSub)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public ResponseEntity<List<OfferResponse>> getMyOffers(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) return ResponseEntity.status(401).build();
+        String sub = jwt.getSubject();
+
+        List<OfferResponse> result = offerRepository.findByOwnerSubOrderByCreatedAtDesc(sub)
+                .stream().map(this::toResponse).toList();
+
+        return ResponseEntity.ok(result);
     }
 
-    // ========== DELETE ==========
-    // DELETE /api/offers/{id}
+    @GetMapping
+    public List<OfferResponse> getAllOffers() {
+        return offerRepository.findAllByOrderByCreatedAtDesc()
+                .stream().map(this::toResponse).toList();
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOffer(
-            @AuthenticationPrincipal Jwt jwt,
-            @PathVariable Long id
-    ) {
-        String requesterSub = jwt.getSubject();
+    public ResponseEntity<Void> deleteOffer(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        if (jwt == null) return ResponseEntity.status(401).build();
+        String sub = jwt.getSubject();
 
         Offer offer = offerRepository.findById(id).orElse(null);
-        if (offer == null) {
-            return ResponseEntity.notFound().build();
-        }
+        if (offer == null) return ResponseEntity.notFound().build();
 
-        // nur Besitzer darf löschen (Admin-Erweiterung kann später rein)
-        if (!offer.getOwnerSub().equals(requesterSub)) {
+        // Admin darf alles löschen (optional, aber praktisch)
+        User u = userRepository.findByOauthId(sub).orElse(null);
+        boolean isAdmin = (u != null && u.getRole() == Role.ADMIN);
+
+        if (!isAdmin && !sub.equals(offer.getOwnerSub())) {
             return ResponseEntity.status(403).build();
         }
 
@@ -94,13 +119,16 @@ public class OfferController {
     private OfferResponse toResponse(Offer o) {
         OfferResponse r = new OfferResponse();
         r.id = o.getId();
-        r.title = o.getTitle();
+        r.tutorId = o.getTutorId();
         r.subject = o.getSubject();
-        r.description = o.getDescription();
+        r.semester = o.getSemester();
         r.hourlyRate = o.getHourlyRate();
-        r.durationMinutes = o.getDurationMinutes();
-        r.location = o.getLocation();
         r.createdAt = o.getCreatedAt();
+
+        var userOpt = userRepository.findByOauthId(o.getOwnerSub());
+        r.ownerName = userOpt.map(User::getName).orElse("Tutor");
+        r.ownerEmail = userOpt.map(User::getEmail).orElse(null);
+
         return r;
     }
 }

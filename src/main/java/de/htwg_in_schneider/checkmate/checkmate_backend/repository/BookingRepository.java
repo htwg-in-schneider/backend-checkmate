@@ -10,15 +10,19 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    
+
     @Modifying
     @Query("delete from Booking b where b.id = :id and b.studentOauthId = :studentOauthId")
     int deleteOwned(@Param("id") Long id, @Param("studentOauthId") String studentOauthId);
-  
+
+    @Modifying
+    @Query("delete from Booking b where b.id = :id and b.tutorId = :tutorId")
+    int deleteByTutor(@Param("id") Long id, @Param("tutorId") Long tutorId);
 
     List<Booking> findAllByOrderByStartAtDesc();
+
+    List<Booking> findByTutorIdOrderByStartAtDesc(Long tutorId);
 
     // meine Buchungen
     List<Booking> findByStudentOauthIdOrderByStartAtDesc(String studentOauthId);
@@ -28,10 +32,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // overlap-check (wie in deinem BookingController)
     List<Booking> findByTutorIdAndStartAtLessThanAndStartAtGreaterThanEqual(
-        Long tutorId,
-        LocalDateTime windowEnd,
-        LocalDateTime windowStart
-    );
+            Long tutorId,
+            LocalDateTime windowEnd,
+            LocalDateTime windowStart);
 
     // availability
     List<Booking> findByTutorIdAndStartAtBetween(Long tutorId, LocalDateTime from, LocalDateTime to);

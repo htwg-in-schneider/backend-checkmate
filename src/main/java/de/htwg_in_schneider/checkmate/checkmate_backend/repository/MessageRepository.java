@@ -12,6 +12,4 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     List<Message> findByTutorIdOrderByCreatedAtDesc(Long tutorId);
     List<Message> findByTutorIdAndStudentOauthIdOrderByCreatedAtAsc(Long tutorId, String studentOauthId);
-
-    
 }

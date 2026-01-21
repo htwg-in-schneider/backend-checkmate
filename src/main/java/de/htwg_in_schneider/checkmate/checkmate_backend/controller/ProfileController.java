@@ -1,6 +1,8 @@
 package de.htwg_in_schneider.checkmate.checkmate_backend.controller;
 
+import de.htwg_in_schneider.checkmate.checkmate_backend.model.Tutor;
 import de.htwg_in_schneider.checkmate.checkmate_backend.model.User;
+import de.htwg_in_schneider.checkmate.checkmate_backend.repository.TutorRepository;
 import de.htwg_in_schneider.checkmate.checkmate_backend.repository.UserRepository;
 
 import org.springframework.http.ResponseEntity;
@@ -8,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -15,29 +18,43 @@ import java.util.Map;
 public class ProfileController {
 
     private final UserRepository userRepository;
+    private final TutorRepository tutorRepository;
 
-    public ProfileController(UserRepository userRepository) {
+    public ProfileController(UserRepository userRepository, TutorRepository tutorRepository) {
         this.userRepository = userRepository;
+        this.tutorRepository = tutorRepository;
     }
 
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal Jwt jwt) {
-        // Auth0 user id (sub) z.B. "auth0|695e5f..."
+        if (jwt == null) {
+            return ResponseEntity.status(401).build();
+        }
+
         String sub = jwt.getSubject();
 
         User backendUser = userRepository.findByOauthId(sub)
                 .orElseThrow(() -> new RuntimeException("No backend user for oauthId=" + sub));
 
-        return ResponseEntity.ok(Map.of(
-                "id", backendUser.getId(),
-                "name", backendUser.getName(),
-                "email", backendUser.getEmail(),
-                "role", backendUser.getRole().name(),
-                "oauthId", backendUser.getOauthId(),
+        // ✅ TutorId: kommt aus tutor-table (nicht aus app_user)
+        Long tutorId = tutorRepository.findByOwnerSub(sub)
+                .map(Tutor::getId)
+                .orElse(null);
 
-                // optional: Debug infos aus dem Token
-                "tokenIssuer", jwt.getIssuer() != null ? jwt.getIssuer().toString() : null,
-                "tokenAudience", jwt.getAudience()
-        ));
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", backendUser.getId());
+        result.put("name", backendUser.getName());
+        result.put("email", backendUser.getEmail());
+        result.put("role", backendUser.getRole() != null ? backendUser.getRole().name() : null);
+        result.put("oauthId", backendUser.getOauthId());
+
+        // ✅ neu:
+        result.put("tutorId", tutorId);
+
+        // optional debug
+        result.put("tokenIssuer", jwt.getIssuer() != null ? jwt.getIssuer().toString() : null);
+        result.put("tokenAudience", jwt.getAudience());
+
+        return ResponseEntity.ok(result);
     }
 }

@@ -3,12 +3,12 @@ package de.htwg_in_schneider.checkmate.checkmate_backend.dto;
 import java.time.Instant;
 
 public class OfferResponse {
+    public String ownerName;
+    public String ownerEmail;
     public Long id;
-    public String title;
+    public Long tutorId;   
     public String subject;
-    public String description;
+    public Integer semester;
     public Integer hourlyRate;
-    public Integer durationMinutes;
-    public String location;
     public Instant createdAt;
 }

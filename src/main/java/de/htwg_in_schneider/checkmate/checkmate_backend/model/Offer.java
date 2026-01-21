@@ -16,19 +16,18 @@ public class Offer {
     private String ownerSub;
 
     @Column(nullable = false)
-    private String title;
+    private Long tutorId;
+
 
     @Column(nullable = false)
     private String subject;
 
-    @Column(length = 4000)
-    private String description;
+    @Column
+    private Integer semester;
 
     @Column(nullable = false)
     private Integer hourlyRate;
 
-    @Column(nullable = false)
-    private Integer durationMinutes;
 
     @Column
     private String location;
@@ -39,9 +38,8 @@ public class Offer {
     @PrePersist
     public void prePersist() {
         this.createdAt = Instant.now();
-        if (this.durationMinutes == null) this.durationMinutes = 60;
         if (this.hourlyRate == null) this.hourlyRate = 20;
-        if (this.location == null) this.location = "Online";
+       
     }
 
     // ===== Getters/Setters =====
@@ -51,23 +49,18 @@ public class Offer {
     public String getOwnerSub() { return ownerSub; }
     public void setOwnerSub(String ownerSub) { this.ownerSub = ownerSub; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public Long getTutorId() { return tutorId; }
+    public void setTutorId(Long tutorId) { this.tutorId = tutorId; }
+
 
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public Integer getSemester() { return semester; }
+    public void setSemester(Integer semester) { this.semester = semester; }
 
     public Integer getHourlyRate() { return hourlyRate; }
     public void setHourlyRate(Integer hourlyRate) { this.hourlyRate = hourlyRate; }
-
-    public Integer getDurationMinutes() { return durationMinutes; }
-    public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
-
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
 
     public Instant getCreatedAt() { return createdAt; }
 }

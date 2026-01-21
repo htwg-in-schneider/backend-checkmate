@@ -56,6 +56,14 @@ public class SecurityConfig {
                 // -------- ADMIN (aktuell: nur authenticated) --------
                 .requestMatchers("/api/admin/**").authenticated()
 
+                // -------- OFFERS --------
+.requestMatchers(HttpMethod.GET, "/api/offers").permitAll()
+.requestMatchers(HttpMethod.GET, "/api/offers/mine").authenticated()
+.requestMatchers(HttpMethod.POST, "/api/offers").authenticated()
+.requestMatchers(HttpMethod.DELETE, "/api/offers/**").authenticated()
+
+
+
                 // -------- FALLBACK --------
                 .anyRequest().permitAll()
             )

@@ -54,9 +54,11 @@ public class AvailabilityController {
                 tutorId, dayEnd, dayStart
         );
 
-        int stepMinutes = 30;
-
         for (AvailabilityRule r : rules) {
+            int stepMinutes = (r.getSlotMinutes() != null && r.getSlotMinutes() > 0)
+                    ? r.getSlotMinutes()
+                    : 30;
+
             LocalTime t = r.getStartTime();
             while (!t.plusMinutes(durationMinutes).isAfter(r.getEndTime())) {
                 LocalDateTime slotStart = LocalDateTime.of(date, t);
@@ -82,7 +84,6 @@ public class AvailabilityController {
         LocalDate day = LocalDate.parse(date);
         DayOfWeek dow = day.getDayOfWeek();
 
-        // Verfügbarkeits-Regeln für diesen Wochentag
         List<AvailabilityRule> rules = availabilityRuleRepo.findByTutorIdAndDayOfWeek(tutorId, dow);
         if (rules == null || rules.isEmpty()) return List.of();
 
@@ -93,12 +94,14 @@ public class AvailabilityController {
                 tutorId, dayEnd, dayStart
         );
 
-        int stepMinutes = 30;
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm");
-
         List<String> result = new ArrayList<>();
 
         for (AvailabilityRule r : rules) {
+            int stepMinutes = (r.getSlotMinutes() != null && r.getSlotMinutes() > 0)
+                    ? r.getSlotMinutes()
+                    : 30;
+
             for (LocalTime t = r.getStartTime();
                  !t.plusMinutes(durationMinutes).isAfter(r.getEndTime());
                  t = t.plusMinutes(stepMinutes)) {

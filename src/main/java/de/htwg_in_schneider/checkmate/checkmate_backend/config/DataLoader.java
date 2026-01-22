@@ -28,6 +28,8 @@ public class DataLoader {
     private static final String STUDENT_SUB = "auth0|695e5f38bd9509a108b5604d";
     private static final String TUTOR_SUB   = "auth0|695e66fcd58fa9152ab1d6f8";
     private static final String ADMIN_SUB   = "auth0|695fda2b6f4f6b2870b04cbd";
+    private static final String DUMMY_SUB   = "auth0|example-tutor0";
+
 
     @Bean
     public CommandLineRunner loadData(
@@ -182,9 +184,9 @@ public class DataLoader {
             if (t.getEmail() == null || t.getEmail().isBlank()) return;
 
             if (t.getEmail().equalsIgnoreCase(tutorEmailForAuthAccount)) {
-                t.setOwnerSub(TUTOR_SUB);
+                t.setOwnerSub(DUMMY_SUB);
                 tutorRepository.save(t);
-                LOG.info("Linked Tutor '{}' ({}) to ownerSub {}", t.getName(), t.getEmail(), TUTOR_SUB);
+                LOG.info("Linked Tutor '{}' ({}) to ownerSub {}", t.getName(), t.getEmail(), DUMMY_SUB);
             }
         });
     }
